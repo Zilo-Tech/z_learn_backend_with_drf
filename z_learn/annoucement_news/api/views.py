@@ -10,6 +10,7 @@ from rest_framework.permissions import IsAuthenticated
 from drf_yasg.utils import swagger_auto_schema
 from .serializers import AnnoucementSerializer
 from annoucement_news.models import Annoucement
+from .permissions import IsAdminOrReadOnly
 
 
 
@@ -20,16 +21,12 @@ def annoucement(reqest):
 class AnnoucementViewSet(viewsets.ModelViewSet):
     """This viewset automatically provides `list`, `create`, `retrieve`,
     `update`, and `destroy` actions."""
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminOrReadOnly]
+    
     
         
     serializer_class = AnnoucementSerializer
     queryset = Annoucement.objects.all()
     
     def perform_create(self, serializer):
-        if self.request.user.is_authenticated:
-            serializer.save(author=self.request.user)
-        else:
-            return Response({
-                'error': 'Authentication required'
-            }, status = status.HTTP_403_FORBIDDEN)
+        serializer.save(author=self.request.user)
