@@ -6,9 +6,10 @@ from rest_framework import permissions
 
 schema_view = get_schema_view(
    openapi.Info(
-      title="My API",
+      title="Z-Learn",
       default_version='v1',
-      description="Test description",
+      description="This is the API documentation for 
+      ",
       terms_of_service="https://www.google.com/policies/terms/",
       contact=openapi.Contact(email="contact@myapi.local"),
       license=openapi.License(name="BSD License"),
