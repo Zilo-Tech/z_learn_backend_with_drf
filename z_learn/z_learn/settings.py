@@ -44,7 +44,7 @@ INSTALLED_APPS = [
 
     
     'authentication',
-    'annoucement_news'
+    'annoucement_news',
 ]
 
 MIDDLEWARE = [

@@ -8,8 +8,7 @@ schema_view = get_schema_view(
    openapi.Info(
       title="Z-Learn",
       default_version='v1',
-      description="This is the API documentation for 
-      ",
+      description="This is the API documentation for ",
       terms_of_service="https://www.google.com/policies/terms/",
       contact=openapi.Contact(email="contact@myapi.local"),
       license=openapi.License(name="BSD License"),
@@ -25,8 +24,9 @@ urlpatterns = [
     # Your other URLs...
     
     path('admin/', admin.site.urls),
-    
-    
+    path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
+
+
     path('account/', include('authentication.api.urls')),
     path('annoucement_news/', include('annoucement_news.api.urls')),
 ]
