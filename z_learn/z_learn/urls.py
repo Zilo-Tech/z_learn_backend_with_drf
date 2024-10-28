@@ -28,4 +28,5 @@ urlpatterns = [
     
     
     path('account/', include('authentication.api.urls')),
+    path('annoucement_news/', include('annoucement_news.api.urls')),
 ]
