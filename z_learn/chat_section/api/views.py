@@ -9,8 +9,15 @@ from rest_framework.decorators import action, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from drf_yasg.utils import swagger_auto_schema
 from .serializers import PostSerializer, CommentSerializer
-from annoucement_news.models import Annoucement
-from .permissions import IsAdminOrReadOnly
+from chat_section.models import Post, Comment
+from .permissions import PostUserOrNot
 
 
-
+class PostViewSet(viewsets.ModelViewSet):
+    queryset = Post.objects.all()
+    serializer_class = PostSerializer
+    permission_classes = [PostUserOrNot]
+    
+    
+    def perform_create(self, serializer):
+        return serializer(author=self.request.user) 
