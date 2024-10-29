@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     
     'authentication',
     'annoucement_news',
+    'chat_section',
 ]
 
 MIDDLEWARE = [
