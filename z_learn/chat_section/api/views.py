@@ -19,6 +19,13 @@ from django.shortcuts import get_object_or_404
 class PostViewSet(viewsets.ViewSet):
     permission_classes = [PostUserOrNot]
     
+    
+    
+    def list(self, request):
+        queryset = Post.objects.all()
+        serializer = PostSerializer(queryset, many=True)
+        return Response(serializer.data, status = status.HTTP_200_OK)
+    
     def create(self, request, *args, **kwargs):
         """ Handle POST requests to create a Post for a user """
         user = request.user 
@@ -47,7 +54,7 @@ class PostViewSet(viewsets.ViewSet):
     
     
     def delete(self, request, pk=None):
-        post_question_delete = get_ojbect_or_404(Post, pk=pk)
+        post_question_delete = get_object_or_404(Post, pk=pk)
         self.check_object_permissions(request, post_question_delete)
         post_question_delete.delete()
         return Response(status = status.HTTP_204_NO_CONTENT)
