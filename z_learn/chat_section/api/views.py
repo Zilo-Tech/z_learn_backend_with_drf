@@ -10,7 +10,7 @@ from rest_framework.permissions import IsAuthenticated
 from drf_yasg.utils import swagger_auto_schema
 from .serializers import PostSerializer, CommentSerializer
 from chat_section.models import Post, Comment
-from .permissions import PostUserOrNot
+from .permissions import PostUserOrNot, CommentUserOrNot
 from django.shortcuts import get_object_or_404
 
 # from drf_spectacular.utils import extend_schema, OpenApiResponse
@@ -18,12 +18,12 @@ from django.shortcuts import get_object_or_404
 
 class PostViewSet(viewsets.ViewSet):
     permission_classes = [PostUserOrNot]
-    
+    serializer_class = PostSerializer
     
     
     def list(self, request):
         queryset = Post.objects.all()
-        serializer = PostSerializer(queryset, many=True)
+        serializer = self.serializer_class(queryset, many=True)
         return Response(serializer.data, status = status.HTTP_200_OK)
     
     def create(self, request, *args, **kwargs):
@@ -62,5 +62,33 @@ class PostViewSet(viewsets.ViewSet):
     
     
 class CommentViewSet(viewsets.ViewSet):
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
-    def list()
+    permission_classes = [CommentUserOrNot]
+    serializer_class = CommentSerializer
+    
+    def list(self, request, post_id=None):
+        """List comments for a specific post"""
+        post = get_object_or_404(Post, id=post_id)
+        comments = post.comments.all()  # Uses the related_name "comments"
+        serializer = self.serializer_class(comments, many=True)
+        return Response(serializer.data)
+
+    def create(self, request, post_id=None):
+        """Create a comment for a specific post"""
+        post = get_object_or_404(Post, id=post_id)
+        serializer = CommentSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(post=post, author=request.user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def destroy(self, request, post_id=None, pk=None):
+        """Delete a comment if the user is the author."""
+
+        post = get_object_or_404(Post, id=post_id)
+        comment = get_object_or_404(Comment, id=pk, post=post)
+        
+        self.check_object_permissions(request, post)
+        comment.delete()
+        return Response(status= status.HTTP_204_NO_CONTENT)
+    
+    

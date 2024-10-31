@@ -4,6 +4,12 @@ from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from rest_framework import permissions
 
+
+
+from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
+
+
+
 schema_view = get_schema_view(
    openapi.Info(
       title="Z-Learn",
@@ -19,15 +25,19 @@ schema_view = get_schema_view(
 
 
 urlpatterns = [
-    path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
-    path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
+   #  path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+   #  path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
     # Your other URLs...
     
-    path('admin/', admin.site.urls),
-    path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
+   path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
+   path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
+    
+    
+   path('admin/', admin.site.urls),
+   path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
 
 
-    path('account/', include('authentication.api.urls')),
-    path('annoucement_news/', include('annoucement_news.api.urls')),
-    path('chat_section/', include('chat_section.api.urls')),
+   path('account/', include('authentication.api.urls')),
+   path('annoucement_news/', include('annoucement_news.api.urls')),
+   path('chat_section/', include('chat_section.api.urls')),
 ]
