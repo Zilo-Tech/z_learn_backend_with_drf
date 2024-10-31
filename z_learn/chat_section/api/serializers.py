@@ -3,7 +3,7 @@ from chat_section.models import Post, Comment
 
 
 class PostSerializer(serializers.ModelSerializer):
-    comments = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+    comments = CommentSerializer(many=True, read_only=True)
     class Meta:
         model = Post
         exclude = ["post_user"]        

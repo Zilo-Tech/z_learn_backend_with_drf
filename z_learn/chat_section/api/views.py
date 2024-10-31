@@ -58,3 +58,9 @@ class PostViewSet(viewsets.ViewSet):
         self.check_object_permissions(request, post_question_delete)
         post_question_delete.delete()
         return Response(status = status.HTTP_204_NO_CONTENT)
+    
+    
+    
+class CommentViewSet(viewsets.ViewSet):
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    def list()
