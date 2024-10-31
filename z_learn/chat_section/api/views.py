@@ -19,5 +19,14 @@ class PostViewSet(viewsets.ModelViewSet):
     permission_classes = [PostUserOrNot]
     
     
+    # def perform_create(self, serializer):
+    #     login_user = self.request.user
+    #     print(login_user)
+    #     return serializer.save(post_user=login_user) 
+    
     def perform_create(self, serializer):
-        return serializer.save(author=self.request.user) 
+        return serializer.save(post_user=self.request.user)
+    
+    
+    def perform_update(self, serializer):
+        return serializer.save(post_user=self.request.user)

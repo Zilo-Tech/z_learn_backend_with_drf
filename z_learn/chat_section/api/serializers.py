@@ -6,7 +6,7 @@ class PostSerializer(serializers.ModelSerializer):
     comments = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
     class Meta:
         model = Post
-        fields = "__all__"        
+        exclude = ["post_user"]        
         
 class CommentSerializer(serializers.ModelSerializer):
     

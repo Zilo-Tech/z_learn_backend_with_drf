@@ -140,7 +140,7 @@ REST_FRAMEWORK = {
 }
 
 
-REST_FRAMEWORK = {
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.CursorPagination',
-    'PAGE_SIZE': 2
-}
+# REST_FRAMEWORK = {
+#     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PagePagination',
+#     'PAGE_SIZE': 2
+# }
