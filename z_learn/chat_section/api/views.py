@@ -44,3 +44,10 @@ class PostViewSet(viewsets.ViewSet):
             serializer.save()
             return Response(serializer.data, status = status.HTTP_200_OK)
         return Response(serializer.errors, status = status.HTTP_400_BAD_REQUEST)
+    
+    
+    def delete(self, request, pk=None):
+        post_question_delete = get_ojbect_or_404(Post, pk=pk)
+        self.check_object_permissions(request, post_question_delete)
+        post_question_delete.delete()
+        return Response(status = status.HTTP_204_NO_CONTENT)
