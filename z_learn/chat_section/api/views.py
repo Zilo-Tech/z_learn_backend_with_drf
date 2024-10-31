@@ -11,38 +11,36 @@ from drf_yasg.utils import swagger_auto_schema
 from .serializers import PostSerializer, CommentSerializer
 from chat_section.models import Post, Comment
 from .permissions import PostUserOrNot
+from django.shortcuts import get_object_or_404
+
 # from drf_spectacular.utils import extend_schema, OpenApiResponse
 
 
 class PostViewSet(viewsets.ViewSet):
-    # queryset = Post.objects.all()
-    # serializer_class = PostSerializer
     permission_classes = [PostUserOrNot]
     
-    
-    # @extends_schema(
-    #     description="Create a new post request",
-    #     request = PostSerializer,
-    #     response=PostSerializer 
-    # )
     def create(self, request, *args, **kwargs):
         """ Handle POST requests to create a Post for a user """
         user = request.user 
-        post_question = Post.objects.create(post_user = user)
-        print(f"The post questio is {post_question}")
-        serializer = PostSerializer(post_question)
-        return Response(serializer.data, status = status.HTTP_201_CREATED)
+        serializer = PostSerializer(data = request.data)
+        if serializer.is_valid():
+            post_question = serializer.save(post_user=user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)        
         
-        
-        
-    # def perform_create(self, serializer):
-    #     login_user = self.request.user
-    #     print(login_user)
-    #     return serializer.save(post_user=login_user) 
     
-    # def perform_create(self, serializer):
-    #     return serializer.save(post_user=self.request.user)
+    def retrieve(self, request,pk=None):
+        queryset = Post.objects.all()
+        post_user = get_object_or_404(queryset, pk=pk)
+        serializer = PostSerializer(post_user)
+        return Response(serializer.data)
     
     
-    # def perform_update(self, serializer):
-    #     return serializer.save(post_user=self.request.user)
+    def update(self, request, pk=None):
+        post_question_update_id = get_object_or_404(Post, pk=pk)
+        self.check_object_permissions(request, post_question_update_id)
+        serializer = PostSerializer(post_question_update_id, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status = status.HTTP_200_OK)
+        return Response(serializer.errors, status = status.HTTP_400_BAD_REQUEST)
