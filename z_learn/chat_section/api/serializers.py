@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from chat_section.models import Post, Comment
+from chat_section.models import Post, Comment, Category
 
 
   
@@ -15,3 +15,9 @@ class PostSerializer(serializers.ModelSerializer):
         model = Post
         exclude = ["post_user", "date_created", "views"]        
       
+
+class CategorySerializer(serializers.ModelSerializer):
+    posts = PostSerializer(many=True, read_only=True)
+    class Meta:
+        model = Category
+        fields = ["name"]
