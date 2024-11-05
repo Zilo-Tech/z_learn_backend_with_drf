@@ -12,6 +12,7 @@ from .serializers import PostSerializer, CommentSerializer
 from chat_section.models import Post, Comment
 from .permissions import PostUserOrNot, CommentUserOrNot
 from django.shortcuts import get_object_or_404
+from drf_spectacular.utils import extend_schema, OpenApiResponse
 
 # from drf_spectacular.utils import extend_schema, OpenApiResponse
 
@@ -65,6 +66,13 @@ class CommentViewSet(viewsets.ViewSet):
     permission_classes = [CommentUserOrNot]
     serializer_class = CommentSerializer
     
+    @extend_schema(
+        description = "List comments for all posts",
+        responses={
+            200: CommentSerializer(many=True),
+            403: OpenApiResponse(response={"error": "You are not authorized to view comments."}, description="You are not authorized to view comments."),
+            }
+        )
     def list(self, request, post_id=None):
         """List comments for a specific post"""
         post = get_object_or_404(Post, id=post_id)
@@ -72,6 +80,16 @@ class CommentViewSet(viewsets.ViewSet):
         serializer = self.serializer_class(comments, many=True)
         return Response(serializer.data)
 
+    @extend_schema(
+        description = "Create a Comment for a post",
+        request=CommentSerializer,
+        responses={
+            200: CommentSerializer,
+            400: OpenApiResponse(response={"error": "Invalid data."}, description="Invalid data."),
+            404: OpenApiResponse(response={"error": "Post not found."}, description="Post not found."),
+            403: OpenApiResponse(response={"error": "You are not authorized to comment on this post."}, description="You are not authorized to comment on this post."),
+        }
+    )
     def create(self, request, post_id=None):
         """Create a comment for a specific post"""
         post = get_object_or_404(Post, id=post_id)
@@ -81,9 +99,18 @@ class CommentViewSet(viewsets.ViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
+    @extend_schema(
+        description="Update a specific Comment",
+        request=CommentSerializer,
+        responses={
+            200: CommentSerializer,
+            400: OpenApiResponse(response={"error": "Invalid data."}, description="Invalid data."),
+            404: OpenApiResponse(response={"error": "Comment not found."}, description="Comment not found."),
+            403: OpenApiResponse(response={"error": "You are not authorized to update this comment."}, description="You are not authorized to update this comment."),
+        }
+    )
     def destroy(self, request, post_id=None, pk=None):
         """Delete a comment if the user is the author."""
-
         post = get_object_or_404(Post, id=post_id)
         comment = get_object_or_404(Comment, id=pk, post=post)
         
