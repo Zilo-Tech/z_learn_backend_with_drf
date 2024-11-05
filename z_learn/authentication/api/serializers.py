@@ -16,9 +16,19 @@ class UserSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             'password': {
                 'write_only': True
+                },
+            
+            'email': {
+                'required': True,
+                'allow_blank': False
                 }
             }
         
+    def validate_email(self, value):
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError(_('This email is already registered.'))
+        return value
+    
     def save(self):
         password = self.validated_data['password']
         password2 = self.validated_data.pop('password2')
@@ -65,6 +75,7 @@ class PasswordChangedSerializer(serializers.Serializer):
     def save(self, **kwargs):
         user = self.context['request'].user 
         user.set_password(self.validated_data['new_password'])
+        validate_password(password)
         user.save()
         return user 
     

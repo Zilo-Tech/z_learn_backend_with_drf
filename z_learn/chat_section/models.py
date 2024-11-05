@@ -22,6 +22,21 @@ class Post(models.Model):
     def __str__(self):
         return self.title
     
+    @property
+    def total_upvotes(self):
+        return self.upvotes
+    
+    @property
+    def total_downvotes(self):
+        return self.downvotes
+    
+    @property
+    def total_comments(self):
+        return self.comments.count()
+    
+    @property
+    def total_views(self):
+        return self.views
     
 class Comment(models.Model):
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="comments")
@@ -35,3 +50,12 @@ class Comment(models.Model):
     def __str__(self):
         return f"Comment by {self.author} on {self.post.post_user} post"
     
+    
+    
+    @property
+    def total_upvotes(self):
+        return self.upvotes
+    
+    @property
+    def total_downvotes(self):  
+        return self.downvotes

@@ -60,8 +60,14 @@ class PostViewSet(viewsets.ViewSet):
         post_question_delete.delete()
         return Response(status = status.HTTP_204_NO_CONTENT)
     
-    
-    
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    def like(self, request, pk=None):
+        post = get_object_or_404(Post, pk=pk)
+        post.upvotes += 1
+        post.save()
+        return Response({'status': 'Post liked'}, status = status.HTTP_200_OK)
+
+
 class CommentViewSet(viewsets.ViewSet):
     permission_classes = [CommentUserOrNot]
     serializer_class = CommentSerializer
@@ -119,3 +125,9 @@ class CommentViewSet(viewsets.ViewSet):
         return Response(status= status.HTTP_204_NO_CONTENT)
     
     
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    def like(self, request, post_id=None, pk=None):
+        comment = get_object_or_404(Comment, id=pk, post_id=post_id)
+        comment.upvotes += 1
+        comment.save()
+        return Response({'status': 'Comment liked'}, status=status.HTTP_200_OK)
