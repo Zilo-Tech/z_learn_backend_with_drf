@@ -38,6 +38,6 @@ urlpatterns = [
 
 
    path('account/', include('authentication.api.urls')),
-   path('annoucement_news/', include('annoucement_news.api.urls')),
+   path('notification/', include('annoucement_news.api.urls')),
    path('chat_section/', include('chat_section.api.urls')),
 ]

@@ -1,8 +1,8 @@
 from rest_framework import serializers
-from annoucement_news.models import Annoucement
+from annoucement_news.models import Notification
 
 
-class AnnoucementSerializer(serializers.ModelSerializer):
+class NotificationSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Annoucement
+        model = Notification
         exclude = ['author']
