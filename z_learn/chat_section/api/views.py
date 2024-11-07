@@ -6,19 +6,25 @@ from django.contrib.auth.models import User
 from rest_framework import status
 from rest_framework import viewsets
 from rest_framework.decorators import action, permission_classes
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAdminUser, IsAuthenticatedOrReadOnly
 from drf_yasg.utils import swagger_auto_schema
-from .serializers import PostSerializer, CommentSerializer
-from chat_section.models import Post, Comment
-from .permissions import PostUserOrNot, CommentUserOrNot
+from .serializers import PostSerializer, CommentSerializer, CategorySerializer
+from chat_section.models import Post, Comment, Category
+from .permissions import PostUserOrNot, CommentUserOrNot, IsAdminOrReadOnly
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema, OpenApiResponse
 
 # from drf_spectacular.utils import extend_schema, OpenApiResponse
 
 
+
+class CategoryViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAdminOrReadOnly]
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
+    
 class PostViewSet(viewsets.ViewSet):
-    permission_classes = [PostUserOrNot]
+    permission_classes = [PostUserOrNot, IsAuthenticatedOrReadOnly]
     serializer_class = PostSerializer
     
     

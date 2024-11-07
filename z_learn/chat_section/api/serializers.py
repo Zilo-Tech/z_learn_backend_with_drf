@@ -11,13 +11,15 @@ class CommentSerializer(serializers.ModelSerializer):
         
 class PostSerializer(serializers.ModelSerializer):
     comments = CommentSerializer(many=True, read_only=True)
+    post_user = serializers.StringRelatedField(source='post_user.username', read_only=True)
+
     class Meta:
         model = Post
-        exclude = ["post_user", "date_created", "views"]        
+        exclude = ["date_created", "views"]        
       
 
 class CategorySerializer(serializers.ModelSerializer):
     posts = PostSerializer(many=True, read_only=True)
     class Meta:
         model = Category
-        fields = ["name"]
+        fields = ["name", "posts"]

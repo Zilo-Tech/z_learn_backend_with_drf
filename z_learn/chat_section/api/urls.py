@@ -1,9 +1,11 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import PostViewSet, CommentViewSet
+from .views import PostViewSet, CommentViewSet, CategoryViewSet
 
 router = DefaultRouter()
 router.register(r'post_questions', PostViewSet, basename = 'post')
+router.register(r'category', CategoryViewSet, basename = 'category')
+
 
 post_comments = CommentViewSet.as_view({
     'get': 'list',
