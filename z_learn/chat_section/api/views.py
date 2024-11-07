@@ -6,19 +6,25 @@ from django.contrib.auth.models import User
 from rest_framework import status
 from rest_framework import viewsets
 from rest_framework.decorators import action, permission_classes
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAdminUser, IsAuthenticatedOrReadOnly
 from drf_yasg.utils import swagger_auto_schema
-from .serializers import PostSerializer, CommentSerializer
-from chat_section.models import Post, Comment
-from .permissions import PostUserOrNot, CommentUserOrNot
+from .serializers import PostSerializer, CommentSerializer, CategorySerializer
+from chat_section.models import Post, Comment, Category
+from .permissions import PostUserOrNot, CommentUserOrNot, IsAdminOrReadOnly
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema, OpenApiResponse
 
 # from drf_spectacular.utils import extend_schema, OpenApiResponse
 
 
+
+class CategoryViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAdminOrReadOnly]
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
+    
 class PostViewSet(viewsets.ViewSet):
-    permission_classes = [PostUserOrNot]
+    permission_classes = [PostUserOrNot, IsAuthenticatedOrReadOnly]
     serializer_class = PostSerializer
     
     
@@ -67,7 +73,34 @@ class PostViewSet(viewsets.ViewSet):
         post.save()
         return Response({'status': 'Post liked'}, status = status.HTTP_200_OK)
 
-
+    @action(detail=False, methods=['get'])
+    @extend_schema(
+        description = "List all trending posts",
+        responses = {
+            200: PostSerializer(many=True),
+            403: OpenApiResponse(response={"error": "You are not authorized to view trending posts."}, description="You are not authorized to view trending posts."),
+            }
+    )
+    def trending(self, request):
+        queryset = Post.objects.order_by('-upvotes', '-views')[:10]
+        serializer = self.serializer_class(queryset, many=True)
+        return Response(serializer.data)
+    
+    
+    @extend_schema(
+        description="List posts by category",
+        responses = {
+            200: PostSerializer(many=True)
+        }   
+    )
+    @action(detail=False, methods=['get'], url_path='filter-by-category/(?P<category_id>[^/.]+)')
+    def filter_by_category(self, request, category_id = None):
+        category = get_object_or_404(Category, pk=category_id)
+        queryset = Post.objects.filter(category=category)
+        serializer = self.serializer_class(queryset, many=True)
+        return Response(serializer.data)
+    
+    
 class CommentViewSet(viewsets.ViewSet):
     permission_classes = [CommentUserOrNot]
     serializer_class = CommentSerializer
@@ -116,18 +149,36 @@ class CommentViewSet(viewsets.ViewSet):
         }
     )
     def destroy(self, request, post_id=None, pk=None):
-        """Delete a comment if the user is the author."""
+        """Delete a comment if the user is the author of the comment."""
         post = get_object_or_404(Post, id=post_id)
         comment = get_object_or_404(Comment, id=pk, post=post)
         
-        self.check_object_permissions(request, post)
+        self.check_object_permissions(request, comment)
         comment.delete()
         return Response(status= status.HTTP_204_NO_CONTENT)
     
     
+    def update(self, request, post_id=None, pk=None):
+        """ Update a comment if the comment belongs to the """
+        post = get_object_or_404(Post, id=post_id)
+        comment = get_object_or_404(Comment, id=pk, post=post)
+        self.check_object_permissions(request, comment)
+        serializer = CommentSerializer(comment, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    @extend_schema(
+        description="Like a comment",
+        responses={200: OpenApiResponse(response={"status": "Comment liked"})},
+    )
     def like(self, request, post_id=None, pk=None):
         comment = get_object_or_404(Comment, id=pk, post_id=post_id)
         comment.upvotes += 1
         comment.save()
         return Response({'status': 'Comment liked'}, status=status.HTTP_200_OK)
+    
+    
+   
