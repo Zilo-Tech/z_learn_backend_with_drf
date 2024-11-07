@@ -67,7 +67,24 @@ class PostViewSet(viewsets.ViewSet):
         post.save()
         return Response({'status': 'Post liked'}, status = status.HTTP_200_OK)
 
-
+    @action(detail=False, methods=['get'])
+    @extend_schema(
+        description = "List all trending posts",
+        responses = {
+            200: PostSerializer(many=True),
+            403: OpenApiResponse(response={"error": "You are not authorized to view trending posts."}, description="You are not authorized to view trending posts."),
+            }
+    )
+    def trending(self, request):
+        queryset = Post.objects.order_by('-upvotes', '-views')[:10]
+        serializer = self.serializer_class(queryset, many=True)
+        return Response(serializer.data)
+    
+    
+    # @extend_schema(
+    #     description="List posts by category",
+        
+    # )
 class CommentViewSet(viewsets.ViewSet):
     permission_classes = [CommentUserOrNot]
     serializer_class = CommentSerializer
@@ -131,3 +148,6 @@ class CommentViewSet(viewsets.ViewSet):
         comment.upvotes += 1
         comment.save()
         return Response({'status': 'Comment liked'}, status=status.HTTP_200_OK)
+    
+    
+   
