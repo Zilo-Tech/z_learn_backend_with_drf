@@ -4,10 +4,10 @@ from chat_section.models import Post, Comment, Category
 
   
 class CommentSerializer(serializers.ModelSerializer):
-    
+    author = serializers.StringRelatedField(source='author.username', read_only=True)
     class Meta:
         model = Comment
-        fields = ["content", "image_comment", "upvotes", "downvotes"]
+        fields = ["content", "image_comment", "upvotes", "downvotes", "author"]
         
 class PostSerializer(serializers.ModelSerializer):
     comments = CommentSerializer(many=True, read_only=True)

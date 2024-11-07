@@ -11,6 +11,7 @@ post_comments = CommentViewSet.as_view({
     'get': 'list',
     'post': 'create',
     'delete': 'destroy',
+    'put': 'update',
 })
 
 urlpatterns = [

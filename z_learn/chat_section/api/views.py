@@ -87,10 +87,20 @@ class PostViewSet(viewsets.ViewSet):
         return Response(serializer.data)
     
     
-    # @extend_schema(
-    #     description="List posts by category",
-        
-    # )
+    @extend_schema(
+        description="List posts by category",
+        responses = {
+            200: PostSerializer(many=True)
+        }   
+    )
+    @action(detail=False, methods=['get'], url_path='filter-by-category/(?P<category_id>[^/.]+)')
+    def filter_by_category(self, request, category_id = None):
+        category = get_object_or_404(Category, pk=category_id)
+        queryset = Post.objects.filter(category=category)
+        serializer = self.serializer_class(queryset, many=True)
+        return Response(serializer.data)
+    
+    
 class CommentViewSet(viewsets.ViewSet):
     permission_classes = [CommentUserOrNot]
     serializer_class = CommentSerializer
@@ -139,16 +149,31 @@ class CommentViewSet(viewsets.ViewSet):
         }
     )
     def destroy(self, request, post_id=None, pk=None):
-        """Delete a comment if the user is the author."""
+        """Delete a comment if the user is the author of the comment."""
         post = get_object_or_404(Post, id=post_id)
         comment = get_object_or_404(Comment, id=pk, post=post)
         
-        self.check_object_permissions(request, post)
+        self.check_object_permissions(request, comment)
         comment.delete()
         return Response(status= status.HTTP_204_NO_CONTENT)
     
     
+    def update(self, request, post_id=None, pk=None):
+        """ Update a comment if the comment belongs to the """
+        post = get_object_or_404(Post, id=post_id)
+        comment = get_object_or_404(Comment, id=pk, post=post)
+        self.check_object_permissions(request, comment)
+        serializer = CommentSerializer(comment, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    @extend_schema(
+        description="Like a comment",
+        responses={200: OpenApiResponse(response={"status": "Comment liked"})},
+    )
     def like(self, request, post_id=None, pk=None):
         comment = get_object_or_404(Comment, id=pk, post_id=post_id)
         comment.upvotes += 1
