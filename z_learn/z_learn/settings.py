@@ -14,7 +14,7 @@ from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
+import os
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
@@ -160,3 +160,5 @@ SPECTACULAR_SETTINGS = {
 #     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PagePagination',
 #     'PAGE_SIZE': 2
 # }
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
