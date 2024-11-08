@@ -1,5 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import User
+from datetime import date
+
+
 # Create your models here.
 class Concourse(models.Model):
     concourseName = models.CharField(max_length=100, blank=False, null=False)
@@ -12,30 +15,49 @@ class Concourse(models.Model):
     is_active = models.BooleanField(default=True)
     exam_date = models.DateField(blank=True, null=True)
     application_deadline = models.DateField(blank=True, null=True)
+    schoolPicture = models.ImageField(upload_to="concourse/images", blank=True, null=True)
 
     def __str__(self):
         return self.concourseName
 
-
+    def is_upcoming(self):
+        return self.exam_date and self.exam_date >= date.today()
+    
+    def is_closed(self):
+        return self.application_deadline and self.application_deadline < date.today()
+    
 class ConcourseDepartment(models.Model):
     departmentName = models.CharField(max_length=100, blank=False, null=False)
     departmentConcourse = models.ForeignKey(Concourse, on_delete=models.CASCADE, related_name="departments")
-    description = models.TextField(blank=False, null=False)
+    description = models.TextField(blank=False, null=True)
     
     def __str__(self):
         return self.departmentName
     
 
 class LatestNews(models.Model):
-    title = models.CharField(max_length=100, blank=True, null=True)
-    newsDate = models.DateTimeField()
-    content = models.TextField()
+    title = models.CharField(max_length=100)
+    newsDate = models.DateTimeField(auto_now_add=True)
+    content = models.TextField(null=True)
+    pdf = models.FileField(upload_to="concourse/latestNews/", blank=True, null=True)
     concourse = models.ForeignKey(Concourse, on_delete=models.CASCADE, related_name="latestNews")
     is_published = models.BooleanField(default=True)
 
     def __str__(self):
         return self.title
     
+class ConcourseApplication(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="concourseUser")
+    concourse = models.ForeignKey(Concourse, on_delete=models.CASCADE, related_name="concourse")
+    application_date = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together= ('user', 'concourse')
+
+    def __str__(self):
+        return f"{self.user.username} - {self.concourse.concourseName}"
+
+
 
 
 

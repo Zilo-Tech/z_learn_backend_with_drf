@@ -8,36 +8,54 @@ from rest_framework.permissions import IsAuthenticated
 from .permissions import AdminUserOrReadOnly
 
 
-
-class LatestNewsViewSet(viewsets.ViewSet):
+class ConcourseViewSet(viewsets.ViewSet):
     permission_classes = [AdminUserOrReadOnly]
     def list(self, request):
-        queryset = LatestNews.objects.all()
-        serializer = LatestNewsSerializer(queryset, many=True)
+        queryset = Concourse.objects.filter(is_active=True)
+        serializer = ConcourseSerializer(queryset, many=True)
         return Response(serializer.data)
     
-    
     def retrieve(self, request, pk=None):
-        queryset = LatestNews.objects.all()
-        latest_news = get_object_or_404(queryset, pk=pk)
-        serializer = LatestNewsSerializer(latest_news)
+        queryset = Concourse.objects.all()
+        concourse = get_object_or_404(queryset, pk=pk)
+        serializer = ConcourseSerializer(concourse)
         return Response(serializer.data)
     
     def create(self, request):
-        serializer = LatestNewsSerializer(data = request.data)
+        serializer = ConcourseSerializer(data = request.data)
         if serializer.is_valid():
-            serializer.save()
+            serializer.save(created_by = self.request.user)
             return Response(serializer.data, status = status.HTTP_201_CREATED)
-        
-    def update(self, request, pk):
-        latest_news_put_id = get_object_or_404(LatestNews, pk=pk)
-        serializer = LatestNewsSerializer(latest_news_put_id, data=request.data)
+        return Response(serializer.errors, status =status.HTTP_400_BAD_REQUEST)
+    
+    def update(self, request, pk): 
+        concourse_put_id = get_object_or_404(Concourse, pk=pk)
+        serializer = ConcourseSerializer(concourse_put_id, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status = status.HTTP_200_OK)
         return Response(serializer.errors, status = status.HTTP_400_BAD_REQUEST)
     
-    def destroy(self, request, pk):
-        latest_news_delete_id = get_object_or_404(LatestNews, pk=pk)
-        latest_news_delete_id.delete()
+    def destroy(self, request, pk=None):
+        concourse_delete_id = get_object_or_404(Concourse, pk=pk)
+        concourse_delete_id.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+    
+    
+class LatestNewsViewSet(viewsets.ViewSet):
+    permission_classes = [AdminUserOrReadOnly]
+    def list(self, request, concourse_id=None):
+        concourse = get_object_or_404(Concourse, id=concourse_id)
+        latestNews = concourse.latestNews.all()
+        serializer = self.serializer_class(latestNews, many=True)
+        return Response(serializer.data)
+    
+    def create(self, request, concourse_id=None):
+        concourse = get_object_or_404(Concourse, id=concourse_id)
+        serializer = LatestNewsSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(concourse= concourse)
+            return Response(serializer.data, status = status.HTTP_201_CREATED)
+        return Response(serializer.errors, status = status.HTTP_400_BAD_REQUEST)
+    
+    
