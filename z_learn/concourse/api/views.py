@@ -44,6 +44,7 @@ class ConcourseViewSet(viewsets.ViewSet):
     
 class LatestNewsViewSet(viewsets.ViewSet):
     permission_classes = [AdminUserOrReadOnly]
+    serializer_class = LatestNewsSerializer
     def list(self, request, concourse_id=None):
         concourse = get_object_or_404(Concourse, id=concourse_id)
         latestNews = concourse.latestNews.all()
@@ -52,10 +53,41 @@ class LatestNewsViewSet(viewsets.ViewSet):
     
     def create(self, request, concourse_id=None):
         concourse = get_object_or_404(Concourse, id=concourse_id)
-        serializer = LatestNewsSerializer(data=request.data)
+        serializer = LatestNewsSerializer(data={**request.data, 'concourse': concourse.id})
         if serializer.is_valid():
-            serializer.save(concourse= concourse)
+            serializer.save()
             return Response(serializer.data, status = status.HTTP_201_CREATED)
         return Response(serializer.errors, status = status.HTTP_400_BAD_REQUEST)
     
+    def create(self, request, concourse_id=None):
+        concourse = get_object_or_404(Concourse, id=concourse_id)
+        serializer = LatestNewsSerializer(data=request.data)
+    
+        if serializer.is_valid():
+            # Pass the concourse when saving
+            serializer.save(concourse=concourse)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+    
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    
+    def retrieve(self, request, concourse_id=None, pk=None):
+        # Get the specific latest news item by ID and concourse ID
+        latest_news_item = get_object_or_404(LatestNews, id=pk, concourse_id=concourse_id)
+        serializer = LatestNewsSerializer(latest_news_item)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    def update(self, request, concourse_id=None, pk=None):
+        latest_news_item = get_object_or_404(LatestNews, id=pk, concourse_id=concourse_id)
+        serializer = LatestNewsSerializer(latest_news_item, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    
+    def destroy(self, request, concourse_id=None, pk=None):
+        latest_news_item = get_object_or_404(LatestNews, id=pk, concourse_id=concourse_id)
+        latest_news_item.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
     

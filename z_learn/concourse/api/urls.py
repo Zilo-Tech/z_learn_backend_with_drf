@@ -8,8 +8,19 @@ router.register(r'concourse', ConcourseViewSet, basename='concourse')
 
 
 latest_news = LatestNewsViewSet.as_view({
-    'get': 'list'
+    'get': 'list',
+    'post': 'create',
 })
+
+
+latest_news_detail = LatestNewsViewSet.as_view({
+    'get': 'retrieve',
+    'put': 'update',
+    'delete': 'destroy',
+})
+
 urlpatterns = [
     path('', include(router.urls)),
+    path('concourse/<int:concourse_id>/latest_news/', latest_news, name='latest-news-list'),
+    path('concourse/<int:concourse_id>/latest_news/<int:pk>/', latest_news_detail, name='latest-news-detail'),
 ]

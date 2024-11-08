@@ -5,8 +5,8 @@ from rest_framework import serializers
 class LatestNewsSerializer(serializers.ModelSerializer):
     class Meta:
         model = LatestNews
-        fields = "__all__"
-
+        fields = ['id', 'title', 'newsDate', 'content', 'pdf', 'concourse', 'is_published']
+        read_only_fields = ['concourse']
 
 class ConcourseApplicationSerializer(serializers.ModelSerializer):
     class Meta:
