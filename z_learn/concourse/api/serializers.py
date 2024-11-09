@@ -20,6 +20,7 @@ class ConcourseDepartmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = ConcourseDepartment
         fields = "__all__"
+        read_only_fields = ["departmentConcourse"]
 
 class ConcourseSerializer(serializers.ModelSerializer):
     departments = ConcourseDepartmentSerializer(many=True, read_only=True)

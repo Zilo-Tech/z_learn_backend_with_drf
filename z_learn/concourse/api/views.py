@@ -1,5 +1,5 @@
-from .serializers import LatestNewsSerializer, ConcourseDepartmentSerializer,  ConcourseSerializer
-from concourse.models import Concourse, ConcourseDepartment, LatestNews
+from .serializers import LatestNewsSerializer, ConcourseDepartmentSerializer,  ConcourseSerializer, ConcourseApplicationSerializer
+from concourse.models import Concourse, ConcourseDepartment, LatestNews, ConcourseApplication
 from django.shortcuts import get_object_or_404
 from rest_framework import viewsets
 from rest_framework.response import Response
@@ -155,4 +155,41 @@ class LatestNewsViewSet(viewsets.ViewSet):
         latest_news_item = get_object_or_404(LatestNews, id=pk, concourse_id=concourse_id)
         latest_news_item.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+
+class ConcourseDepartmentViewSet(viewsets.ViewSet):
+    permission_classes = [AdminUserOrReadOnly]
+    serializer_class = ConcourseDepartmentSerializer
+    
+    @extend_schema(
+        description = "List all ConcourseDepartment of a particular Concourse",
+        responses = {
+            200: ConcourseDepartmentSerializer(many=True),
+            403: OpenApiResponse(response={"error": "You are not authorized to view concourses."}, description="You are not authorized to view concourses."),
+        }
+    )
+    def list(self, request, concourse_id=None):
+        concourse = get_object_or_404(Concourse, id=concourse_id)
+        departments = concourse.departments.all()
+        serializer = self.serializer_class(departments, many=True)
+        return Response(serializer.data)
+    
+    @extend_schema(
+        description = "create a ConcourseDepartment for a concourse",
+        responses = {
+            200: ConcourseDepartmentSerializer,
+            403: OpenApiResponse(response={"error": "You are not authorized to view concourses."}, description="You are not authorized to view concourses."),
+        }
+    ) 
+    def create(self, request, concourse_id=None):
+        concourse = get_object_or_404(Concourse, id=concourse_id)
+        serializer = ConcourseDepartmentSerializer(data=request.data)
+    
+        if serializer.is_valid():
+            # Pass the concourse when saving
+            serializer.save(departmentConcourse=concourse)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+    
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
