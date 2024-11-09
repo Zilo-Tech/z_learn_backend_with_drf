@@ -46,6 +46,9 @@ class LatestNews(models.Model):
     def __str__(self):
         return self.title
     
+    
+    
+  ### Still to be done...  
 class ConcourseApplication(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="concourseUser")
     concourse = models.ForeignKey(Concourse, on_delete=models.CASCADE, related_name="concourse")

@@ -10,7 +10,7 @@ class LatestNewsSerializer(serializers.ModelSerializer):
 
 class ConcourseApplicationSerializer(serializers.ModelSerializer):
     class Meta:
-        models = ConcourseApplication
+        model = ConcourseApplication
         fields = "__all__"
         
         
@@ -18,8 +18,9 @@ class ConcourseDepartmentSerializer(serializers.ModelSerializer):
     latestNews = LatestNewsSerializer(many=True, read_only=True)
     concourse = ConcourseApplicationSerializer(many=True, read_only=True)
     class Meta:
-        models = ConcourseDepartment
+        model = ConcourseDepartment
         fields = "__all__"
+        read_only_fields = ["departmentConcourse"]
 
 class ConcourseSerializer(serializers.ModelSerializer):
     departments = ConcourseDepartmentSerializer(many=True, read_only=True)
