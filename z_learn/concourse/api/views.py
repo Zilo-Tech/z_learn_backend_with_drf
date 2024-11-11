@@ -14,7 +14,7 @@ from drf_spectacular.utils import extend_schema, OpenApiResponse
 
 
 class ConcourseTypeFieldViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAdminUser]
+    permission_classes = [AdminUserOrReadOnly]
     serializer_class = ConcourseTypeFieldSerializer
     queryset = ConcourseTypeField.objects.all()
     
@@ -57,7 +57,7 @@ class ConcourseViewSet(viewsets.ViewSet):
         concourse_type_field = get_object_or_404(ConcourseTypeField, id = concourse_type_field_id)
         serializer = ConcourseSerializer(data = request.data)
         if serializer.is_valid():
-            serializer.save(created_by = self.request.user, concourseTypeField=concourse_type_field)
+            serializer.save(created_by = self.request.user, concourseType=concourse_type_field)
             return Response(serializer.data, status = status.HTTP_201_CREATED)
         return Response(serializer.errors, status =status.HTTP_400_BAD_REQUEST)
     

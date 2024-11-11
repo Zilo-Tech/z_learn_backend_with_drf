@@ -25,7 +25,7 @@ class Concourse(models.Model):
     exam_date = models.DateField(blank=True, null=True)
     application_deadline = models.DateField(blank=True, null=True)
     schoolPicture = models.ImageField(upload_to="concourse/images", blank=True, null=True)
-    concourseTypeField = models.ForeignKey(ConcourseTypeField, on_delete=models.CASCADE, related_name="concourses")
+    concourseType = models.ForeignKey(ConcourseTypeField, on_delete=models.CASCADE, related_name="concourses")
 
     def __str__(self):
         return self.concourseName
