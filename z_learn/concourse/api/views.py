@@ -1,14 +1,23 @@
-from .serializers import LatestNewsSerializer, ConcourseDepartmentSerializer,  ConcourseSerializer, ConcourseApplicationSerializer
-from concourse.models import Concourse, ConcourseDepartment, LatestNews, ConcourseApplication
+from .serializers import (LatestNewsSerializer, ConcourseDepartmentSerializer,
+                          ConcourseSerializer, ConcourseApplicationSerializer, ConcourseTypeFieldSerializer)
+
+from concourse.models import (Concourse, ConcourseDepartment, LatestNews,
+                              ConcourseApplication, ConcourseTypeField)
+
 from django.shortcuts import get_object_or_404
 from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from .permissions import AdminUserOrReadOnly
 from drf_spectacular.utils import extend_schema, OpenApiResponse
 
 
+class ConcourseTypeFieldViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAdminUser]
+    serializer_class = ConcourseTypeFieldSerializer
+    queryset = ConcourseTypeField.objects.all()
+    
 class ConcourseViewSet(viewsets.ViewSet):
     permission_classes = [AdminUserOrReadOnly]
     
@@ -44,10 +53,11 @@ class ConcourseViewSet(viewsets.ViewSet):
             403: OpenApiResponse(response={"error": "You are not authorized to view concourses."}, description="You are not authorized to view concourses."),
         }
     )
-    def create(self, request):
+    def create(self, request, concourse_type_field_id=None):
+        concourse_type_field = get_object_or_404(ConcourseTypeField, id = concourse_type_field_id)
         serializer = ConcourseSerializer(data = request.data)
         if serializer.is_valid():
-            serializer.save(created_by = self.request.user)
+            serializer.save(created_by = self.request.user, concourseTypeField=concourse_type_field)
             return Response(serializer.data, status = status.HTTP_201_CREATED)
         return Response(serializer.errors, status =status.HTTP_400_BAD_REQUEST)
     

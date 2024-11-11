@@ -1,4 +1,4 @@
-from concourse.models import Concourse, ConcourseDepartment,LatestNews, ConcourseApplication
+from concourse.models import Concourse, ConcourseDepartment,LatestNews, ConcourseApplication, ConcourseTypeField
 from rest_framework import serializers
 
 
@@ -28,3 +28,9 @@ class ConcourseSerializer(serializers.ModelSerializer):
         model = Concourse
         fields = "__all__"
     
+
+class ConcourseTypeFieldSerializer(serializers.ModelSerializer):
+    concourses = ConcourseSerializer(many=True, read_only=True)
+    class Meta:
+        model = ConcourseTypeField
+        fields = "__all__"

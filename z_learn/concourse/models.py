@@ -4,6 +4,15 @@ from datetime import date
 
 
 # Create your models here.
+
+
+class ConcourseTypeField(models.Model):
+    concourseTypeField = models.CharField(max_length=100, unique=True)  # Add unique constraint for department names like Engineering, Medicine, etc.
+    
+    def __str__(self):
+        return self.concourseTypeField
+    
+    
 class Concourse(models.Model):
     concourseName = models.CharField(max_length=100, blank=False, null=False)
     concourseSubName = models.CharField(max_length=100, blank=True, null=True)
@@ -16,6 +25,7 @@ class Concourse(models.Model):
     exam_date = models.DateField(blank=True, null=True)
     application_deadline = models.DateField(blank=True, null=True)
     schoolPicture = models.ImageField(upload_to="concourse/images", blank=True, null=True)
+    concourseTypeField = models.ForeignKey(ConcourseTypeField, on_delete=models.CASCADE, related_name="concourses")
 
     def __str__(self):
         return self.concourseName
