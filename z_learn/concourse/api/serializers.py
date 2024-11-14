@@ -24,7 +24,7 @@ class ConcourseDepartmentSerializer(serializers.ModelSerializer):
 
 class ConcourseSerializer(serializers.ModelSerializer):
     concourseTypeName = serializers.CharField(source='concourseType.concourseTypeField', read_only=True)
-    departments = ConcourseDepartmentSerializer(many=True, read_only=True)
+    # departments = ConcourseDepartmentSerializer(many=True, read_only=True)
     class Meta:
         model = Concourse
         fields = [
@@ -41,7 +41,7 @@ class ConcourseSerializer(serializers.ModelSerializer):
             'schoolPicture',
             'created_by',
             'concourseTypeName', 
-            'departments',
+            # 'departments',
         ]       
         read_only_fields = ['concourseType']
         # extra_fields = {
