@@ -9,7 +9,7 @@ from rest_framework.decorators import action, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from drf_yasg.utils import swagger_auto_schema
 from .serializers import NotificationSerializer
-from annoucement_news.models import Notification
+from annoucement_news.models import Notification, NotificationReadStatus
 from .permissions import IsAdminOrReadOnly
 from rest_framework.pagination import LimitOffsetPagination
 from .pagination import LargeResultsSetPagination
@@ -26,18 +26,25 @@ class NotificationViewSet(viewsets.ModelViewSet):
     pagination_class = LargeResultsSetPagination
     
     serializer_class = NotificationSerializer
-    queryset = Notification.objects.all()
+    queryset = Notification.objects.all().order_by('-date_created')
     
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
         
         
-    @action(detail=True, methods=["post"], permission_classes=[IsAuthenticated])
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
     def mark_as_read(self, request, pk=None):
         notification = self.get_object()
-        notification.is_read = True 
-        notification.save()
+        #checking if a read record already exists
+        read_status, created = NotificationReadStatus.objects.get_or_create(
+            user = request.user,
+            notification = notification,
+        )
+        read_status.is_read = True 
+        read_status.save()
+        
         return Response({
             'status': 'Notification marked as read',
         },
             status = status.HTTP_200_OK)
+    
