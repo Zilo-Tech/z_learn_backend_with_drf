@@ -49,7 +49,7 @@ class LatestNews(models.Model):
     title = models.CharField(max_length=100)
     newsDate = models.DateTimeField(auto_now_add=True)
     content = models.TextField(null=True)
-    pdf = models.FileField(upload_to="concourse/latestNews/", blank=True, null=True)
+    pdf = models.FileField(upload_to="images/latestNews/")
     concourse = models.ForeignKey(Concourse, on_delete=models.CASCADE, related_name="latestNews")
     is_published = models.BooleanField(default=True)
 
