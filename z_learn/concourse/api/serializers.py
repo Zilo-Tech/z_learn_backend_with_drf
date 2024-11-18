@@ -14,7 +14,7 @@ class LatestNewsSerializer(serializers.ModelSerializer):
         read_only_fields = ['concourse']
 
 class ConcourseApplicationSerializer(serializers.ModelSerializer):
-    class Meta:
+    class Meta: 
         model = ConcourseApplication
         fields = "__all__"
         
