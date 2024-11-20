@@ -10,6 +10,7 @@ from rest_framework.decorators import action, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from .serializers import UserSerializer, PasswordChangedSerializer
 from drf_yasg.utils import swagger_auto_schema
+from rest_framework.authtoken.views import ObtainAuthToken
 
 
 class RegisterUser(viewsets.ViewSet):
@@ -71,3 +72,32 @@ class RegisterUser(viewsets.ViewSet):
             return Response({'detail': 'Password changed successfully'}, status = status.HTTP_200_OK)
         return Response(serializer.errors, status = status.HTTP_400_BAD_REQUEST)
     
+    
+    
+
+class CustomAuthToken(ObtainAuthToken):
+    """This class will allow user to login """
+    permission_classes([IsAuthenticated]) 
+    @swagger_auto_schema(
+        operation_description="Login a new user",
+        request_body=UserSerializer,
+        responses={
+            status.HTTP_201_CREATED: "Login Successful",
+            status.HTTP_400_BAD_REQUEST: "Bad Request."
+        },
+    )
+    
+    
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data['user']
+        token, created = Token.objects.get_or_create(user=user)
+        response_data = {
+            'token': token.key,
+            'email': user.email,
+            'username': user.username,
+        }
+        
+        return Response(response_data, status = status.HTTP_200_OK)  
+        
