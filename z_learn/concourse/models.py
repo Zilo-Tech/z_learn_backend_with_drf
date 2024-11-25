@@ -59,7 +59,7 @@ class LatestNews(models.Model):
     
     
   ### Still to be done...  
-class ConcourseApplication(models.Model):
+class ConcourseRegistration(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="concourseUser")
     concourse = models.ForeignKey(Concourse, on_delete=models.CASCADE, related_name="concourse")
     application_date = models.DateTimeField(auto_now_add=True)
