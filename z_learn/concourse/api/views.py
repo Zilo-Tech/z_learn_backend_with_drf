@@ -1,8 +1,8 @@
 from .serializers import (LatestNewsSerializer, ConcourseDepartmentSerializer,
-                          ConcourseSerializer, ConcourseApplicationSerializer, ConcourseTypeFieldSerializer)
+                          ConcourseSerializer, ConcourseRegistrationSerializer, ConcourseTypeFieldSerializer)
 
 from concourse.models import (Concourse, ConcourseDepartment, LatestNews,
-                              ConcourseApplication, ConcourseTypeField)
+                              ConcourseRegistration, ConcourseTypeField)
 
 from django.shortcuts import get_object_or_404
 from rest_framework import viewsets
@@ -202,4 +202,12 @@ class ConcourseDepartmentViewSet(viewsets.ViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
     
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
+
+
+
+
+
+# class ConcourseRegistrationViewSet(viewsets.ViewSet):
     
