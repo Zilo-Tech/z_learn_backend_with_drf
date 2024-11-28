@@ -44,6 +44,9 @@ my_registered_concourse = ConcourseRegistrationViewSet.as_view({
     'get': 'my_concourse_registered'
 })
 
+total_number_of_students = ConcourseRegistrationViewSet.as_view({
+    'get': 'total_users_enroll_for_concourse'
+})
 
 urlpatterns = [
     path('', include(router.urls)),
@@ -63,4 +66,5 @@ urlpatterns = [
     path('concourse/<int:concourse_id>/register_concourse/', concourse_register, name='concourse-register'),
     path('concourse/<int:concourse_id>/register_concourse_all_users/', concourse_list_users, name='concourse-register-all-users'),
     path('concourse/my_registed_concourse', my_registered_concourse, name='my_registered_concourse'),
+    path('concourse/<int:concourse_id>/total_users_enroll_for_concourse', total_number_of_students, name='total_users_enroll_for_concourse'),
 ]

@@ -286,3 +286,17 @@ class ConcourseRegistrationViewSet(viewsets.ViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
     
     
+    
+    @action(detail=True, method=['get'], url_path = 'total_users_enroll_for_concourse')
+    @extend_schema(
+        description = "Display total number of users registered for a given Concourse",
+        responses = {
+            200: ConcourseRegistrationSerializer(),
+            403: OpenApiResponse(response={"error": "You are not authorized to view concourses."}, description="You are not authorized to view concourses."),
+    })
+
+    def total_users_enroll_for_concourse(self, request, concourse_id = None):
+        concourse = get_object_or_404(Concourse, id=concourse_id)
+        count = ConcourseRegistration.objects.filter(concourse = concourse, payment_status=True).count()
+        print("Total students are: ${count}")
+        return Response({'total_users_enrolled': count}, status=status.HTTP_200_OK)
