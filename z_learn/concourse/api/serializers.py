@@ -16,7 +16,7 @@ class LatestNewsSerializer(serializers.ModelSerializer):
 class ConcourseRegistrationSerializer(serializers.ModelSerializer):
     class Meta: 
         model = ConcourseRegistration
-        fields = "__all__"
+        fields = ["phoneNumber",]
         
         
 class ConcourseDepartmentSerializer(serializers.ModelSerializer):

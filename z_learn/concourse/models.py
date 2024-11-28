@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from datetime import date
+from django.core.validators import RegexValidator
 
 
 # Create your models here.
@@ -65,13 +66,21 @@ class ConcourseRegistration(models.Model):
     application_date = models.DateTimeField(auto_now_add=True)
     payment_status = models.BooleanField(default=False)
     
+    phone_regex = RegexValidator(
+        regex=r'^\d{7,10}$',  # Adjust the length as necessary (7 to 10 digits)
+        message="Phone number must be entered as digits only and must be between 7 and 10 digits."
+    )
     
+    phoneNumber = models.CharField(
+        validators=[phone_regex],  # Wrap the validator in a list
+        max_length=10
+    )
+     
     class Meta:
-        unique_together= ('user', 'concourse')
+        unique_together = ('user', 'concourse')
 
     def __str__(self):
         return f"{self.user.username} - {self.concourse.concourseName}"
-
 
 
 

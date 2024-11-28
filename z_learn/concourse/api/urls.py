@@ -8,7 +8,9 @@ router = DefaultRouter()
 router.register(r'concourse', ConcourseViewSet, basename='concourse')
 router.register(r'concourse_department', ConcourseDepartmentViewSet, basename='concourse_department')
 router.register(r'concourse_type_field', ConcourseTypeFieldViewSet, basename='concourse_type')
-router.register(r'concourse_registration', ConcourseRegistrationViewSet, basename='concourse_registration')
+# router.register(r'concourse_registration', ConcourseRegistrationViewSet, basename='concourse_registration')
+
+
 
 latest_news_list = LatestNewsViewSet.as_view({
     'get': 'list',
@@ -30,6 +32,11 @@ department = ConcourseDepartmentViewSet.as_view({
 })
 
 
+concourse_register = ConcourseRegistrationViewSet.as_view({
+    'post': 'register_and_confirm_payment',
+})
+
+
 urlpatterns = [
     path('', include(router.urls)),
     
@@ -43,5 +50,7 @@ urlpatterns = [
     
     path('concourse/<int:concourse_id>/department/', department, name='department'),
     # path('concourse/<int:concourse_id>/latest_news', latest_news, name='latest_news'),
+    
+    path('concourse/<int:concourse_id>/register_concourse/', concourse_register, name='concourse-register'),
     
 ]
