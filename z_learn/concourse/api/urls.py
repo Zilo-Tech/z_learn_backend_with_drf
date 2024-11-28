@@ -36,6 +36,14 @@ concourse_register = ConcourseRegistrationViewSet.as_view({
     'post': 'register_and_confirm_payment',
 })
 
+concourse_list_users = ConcourseRegistrationViewSet.as_view({
+    'get': 'concourse_list_all_users'
+})
+
+my_registered_concourse = ConcourseRegistrationViewSet.as_view({
+    'get': 'my_concourse_registered'
+})
+
 
 urlpatterns = [
     path('', include(router.urls)),
@@ -51,6 +59,8 @@ urlpatterns = [
     path('concourse/<int:concourse_id>/department/', department, name='department'),
     # path('concourse/<int:concourse_id>/latest_news', latest_news, name='latest_news'),
     
-    path('concourse/<int:concourse_id>/register_concourse/', concourse_register, name='concourse-register'),
     
+    path('concourse/<int:concourse_id>/register_concourse/', concourse_register, name='concourse-register'),
+    path('concourse/<int:concourse_id>/register_concourse_all_users/', concourse_list_users, name='concourse-register-all-users'),
+    path('concourse/my_registed_concourse', my_registered_concourse, name='my_registered_concourse'),
 ]

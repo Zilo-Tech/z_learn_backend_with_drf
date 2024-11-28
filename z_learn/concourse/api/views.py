@@ -248,7 +248,7 @@ class ConcourseRegistrationViewSet(viewsets.ViewSet):
     
     
     @action(detail=True, methods=['get'], url_path = 'concourse_list_all_users')
-    @permission_classes([IsAdminUser])
+    @permission_classes([IsAuthenticated, IsAdminUser])
     @extend_schema(
         description = "List all users registed for a particular concourse done by Admin",
         responses = {
@@ -256,6 +256,9 @@ class ConcourseRegistrationViewSet(viewsets.ViewSet):
             403: OpenApiResponse(response={"error": "You are not authorized to view concourses."}, description="You are not authorized to view concourses."),
         })
     def concourse_list_all_users(self, request, concourse_id=None):
+        self.permission_classes = [IsAuthenticated, IsAdminUser]
+        self.check_permissions(request)
+        
         concourse = get_object_or_404(Concourse, id=concourse_id)
         registrations = ConcourseRegistration.objects.filter(concourse = concourse, payment_status = True)
         serializer = ConcourseRegistrationSerializer(registrations, many=True)
@@ -264,33 +267,22 @@ class ConcourseRegistrationViewSet(viewsets.ViewSet):
     
     
     @action(detail=False, methods=['get'], url_path = 'my_concourse_registered')
-    @permission_classes([IsAuthenticated])
+    @permission_classes([IsAuthenticated, IsAdminUser])
     @extend_schema(
         description = "List all concourse a user has enrolled for ",
         responses = {
-            200: ConcourseSerializer(many=True),
+            200: ConcourseRegistrationSerializer(many=True),
             403: OpenApiResponse(response={"error": "You are not authorized to view concourses."}, description="You are not authorized to view concourses."),
         })
     
     def my_concourse_registered(self, request):
+        self.permissions_classes = [IsAuthenticated]
+        self.check_permissions(request)
         user = request.user
         registration = ConcourseRegistration.objects.filter(user = user)
-        if not registrations.exists():
-            return Response({"error": "User has not registered for any concourse."}, status=status.HTTP_404_NOT_FOUND)
-        serializer = ConcourseSerializer(registration, many=True)
+        if not registration.exists():
+            return Response({"error": "You have not registered for any concourse yet."}, status=status.HTTP_404_NOT_FOUND)
+        serializer = ConcourseRegistrationSerializer(registration, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
     
     
-    
-# registration_list = ConcourseRegistrationViewSet.as_view({
-#     'get': 'list',
-# })
-
-# registration_detail = ConcourseRegistrationViewSet.as_view({
-#     'get': 'retrieve',
-# })
-
-# urlpatterns = [
-#     path('concourse/<int:concourse_id>/registrations/', registration_list, name='registration-list'),
-#     path('concourse/<int:concourse_id>/registrations/<int:pk>/', registration_detail, name='registration-detail'),
-# ]
