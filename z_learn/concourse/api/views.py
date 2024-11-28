@@ -11,7 +11,7 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from .permissions import AdminUserOrReadOnly
 from drf_spectacular.utils import extend_schema, OpenApiResponse
-
+from rest_framework.decorators import action
 
 class ConcourseTypeFieldViewSet(viewsets.ModelViewSet):
     permission_classes = [AdminUserOrReadOnly]
@@ -209,5 +209,66 @@ class ConcourseDepartmentViewSet(viewsets.ViewSet):
 
 
 
-# class ConcourseRegistrationViewSet(viewsets.ViewSet):
+class ConcourseRegistrationViewSet(viewsets.ViewSet):
+    @extend_schema(
+        description = "Create ConcourseRegistration of a particular Concourse",
+        responses = {
+            201: ConcourseRegistrationSerializer(),
+        })
+    
+    def create(self, request, *args, **kwargs):
+        serializer = ConcourseRegistrationSerializer(data=request.data)
+        if serializer.is_valid(payment_status=False):
+            serializer
+            serializer.save()
+            return Response(serializer.save, status = status.HTTP_201_CREATED)
+        return Response(serializer.errors, status = status.HTTP_400_BAD_REQUEST)
+    
+   
+    
+    # Consume our payment api here.....
+    @action(detail=True, methods=['patch'])
+    @extend_schema(
+        description = "Confirm the payment of a ConcourseRegistration",
+        responses = {
+            200: ConcourseRegistrationSerializer(),
+            403: OpenApiResponse(response={"error": "You are not authorized to view concourses."}, description="You are not authorized to view concourses."),
+        }
+    )
+    def confirm_payment(self, request, pk=None):
+        registration = get_object_or_404(ConcourseRegistration, pk=pk)
+        registration.payment_status = True
+        registration.save()
+        serializer = ConcourseRegistrationSerializer(registration)
+        return Response(serializer.data, status = status.HTTP_200_OK)
+    
+    
+    @action(detail=False, methods=['get'])
+    @extend_schema(
+        description = "List all ConcourseRegistrations for all users",
+        responses = {
+            200: ConcourseRegistrationSerializer(many=True),
+            403: OpenApiResponse(response={"error": "You are not authorized to view concourses."}, description="You are not authorized to view concourses."),
+        })
+    def registration_for_concourse(self, request):
+        concourse_id = request.query_params.get('concourse_id')
+        if not concourse_id:
+            return Response({"error": "Concourse ID is required."}, status=status.HTTP_400_BAD_REQUEST)
+        registration = ConcourseRegistration.objects.filter(concours)
+        
+    
+    @action(detail=False, methods=['get'], url_path = 'users-for-concourse')
+    @permission_classes([IsAdminUser])
+    @extend_schema(
+        description = "List all users registed for a particular concourse done by Admin",
+        responses = {
+            200: ConcourseRegistrationSerializer(many=True),
+            403: OpenApiResponse(response={"error": "You are not authorized to view concourses."}, description="You are not authorized to view concourses."),
+        })
+    def users_for_concourse(self, request, concourse_id=None):
+        concourse = get_object_or_404(Concourse, id=concourse_id)
+        registrations = ConcourseRegistrations.objects.filter(concourse = concourse, payment_status = True)
+        serializer = ConcourseRegistrationSerializer(registrations, many=True)
+        return Response(serializer.data, status = status.HTTP_200_OK)
+    
     

@@ -1,13 +1,14 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import (LatestNewsViewSet, ConcourseViewSet, LatestNewsViewSet, 
-                    ConcourseDepartmentViewSet, ConcourseTypeFieldViewSet)
+                    ConcourseDepartmentViewSet, ConcourseTypeFieldViewSet, ConcourseRegistrationViewSet)
 
 router = DefaultRouter()
 # router.register(r'latest_news', LatestNewsViewSet, basename='latest_news')
 router.register(r'concourse', ConcourseViewSet, basename='concourse')
 router.register(r'concourse_department', ConcourseDepartmentViewSet, basename='concourse_department')
 router.register(r'concourse_type_field', ConcourseTypeFieldViewSet, basename='concourse_type')
+router.register(r'concourse_registration', ConcourseRegistrationViewSet, basename='concourse_registration')
 
 latest_news_list = LatestNewsViewSet.as_view({
     'get': 'list',

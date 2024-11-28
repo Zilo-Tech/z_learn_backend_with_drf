@@ -63,7 +63,9 @@ class ConcourseRegistration(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="concourseUser")
     concourse = models.ForeignKey(Concourse, on_delete=models.CASCADE, related_name="concourse")
     application_date = models.DateTimeField(auto_now_add=True)
-
+    payment_status = models.BooleanField(default=False)
+    
+    
     class Meta:
         unique_together= ('user', 'concourse')
 
