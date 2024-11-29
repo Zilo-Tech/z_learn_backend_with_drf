@@ -14,10 +14,12 @@ class LatestNewsSerializer(serializers.ModelSerializer):
         read_only_fields = ['concourse']
 
 class ConcourseRegistrationSerializer(serializers.ModelSerializer):
+    user = serializers.StringRelatedField(read_only=True)
+    concourse = serializers.StringRelatedField(read_only=True)
     class Meta: 
         model = ConcourseRegistration
-        fields = "__all__"
-        
+        fields = ["phoneNumber", "user", "concourse"]
+        read_only_fields = ['concourse', 'user']
         
 class ConcourseDepartmentSerializer(serializers.ModelSerializer):
     latestNews = LatestNewsSerializer(many=True, read_only=True)
