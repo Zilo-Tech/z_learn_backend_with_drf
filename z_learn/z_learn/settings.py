@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
-
+import dj_database_url
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 import os
@@ -25,17 +25,18 @@ SECRET_KEY = 'django-insecure-liugc^98=nnb1_qlxpah0(!2-h0m9qm2^b2fs=pwtl+%xe0_7r
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = [
-    "192.168.1.122",
-    '192.168.1.109',
-    '127.0.0.1',
-    'localhost',
-    '10.0.2.2',
-    '0.0.0.0',    
-    '192.168.1.109',
+# ALLOWED_HOSTS = [
+#     "192.168.1.122",
+#     '192.168.1.109',
+#     '127.0.0.1',
+#     'localhost',
+#     '10.0.2.2',
+#     '0.0.0.0',    
+#     '192.168.1.109',
     
-]
+# ]
 
+ALLOWED_HOSTS = ["*"]
 
 # Application definition
 
@@ -96,11 +97,15 @@ WSGI_APPLICATION = 'z_learn.wsgi.application'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': dj_database_url.parse(os.environ.get('DATABASE_URL'))
 }
+
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
 
 
 # Password validation

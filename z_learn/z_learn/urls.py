@@ -8,6 +8,7 @@ from django.conf.urls.static import static
 
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
+from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 
 
 schema_view = get_schema_view(
@@ -45,3 +46,6 @@ urlpatterns = [
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    
+    
+urlpatterns += staticfiles_urlpatterns()
