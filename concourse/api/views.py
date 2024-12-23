@@ -12,6 +12,14 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from .permissions import AdminUserOrReadOnly
 from drf_spectacular.utils import extend_schema, OpenApiResponse
 from rest_framework.decorators import action, permission_classes
+from .payment import make_payment
+
+
+# Secret keys not to be here
+access_key = "15a980c6-82e6-4d1e-a759-0afbfde8daef"
+secret_key = "85f7f5bb-1ef3-471a-b9ec-16a75a86a076"
+application_key = "81c6eb7ab02fa9e81bf7e07beb77c949129bcfab"
+
 
 class ConcourseTypeFieldViewSet(viewsets.ModelViewSet):
     permission_classes = [AdminUserOrReadOnly]
@@ -224,10 +232,11 @@ class ConcourseRegistrationViewSet(viewsets.ViewSet):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
         # Interacting with the payment gateway
+        payment_results = make_payment(application_key, access_key, secret_key, amount=11, service='MTN', payer='672384579', trxID='1')
         payment_response = self.process_payment_gateway(request.user, serializer.validated_data)
         
         # Simulate payment response(This will be replae with the actual API intergration)
-        if not payment_response.get('success'):
+        if not payment_results["Operation Success"] or not payment_results["Transaction Success"]:
             return Response({'error': 'Payment failed. Registrations is not completed'}, status = status.HTTP_400_BAD_REQUEST)
         
         # Save the registration details
