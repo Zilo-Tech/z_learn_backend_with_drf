@@ -15,7 +15,7 @@ class PostSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Post
-        exclude = ["date_created", "views"]        
+        fields = "__all__"
       
 
 class CategorySerializer(serializers.ModelSerializer):
