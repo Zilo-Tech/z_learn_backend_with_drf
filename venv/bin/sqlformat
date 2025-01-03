@@ -1,4 +1,4 @@
-#!/home/kongnyuy/Desktop/z_learn_backend_with_drf/venv/bin/python3
+#!/home/nyuydine/Documents/ZiloTech/z_learn_backend_with_drf/venv/bin/python3.12
 # -*- coding: utf-8 -*-
 import re
 import sys
