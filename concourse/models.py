@@ -12,7 +12,7 @@ class ConcourseTypeField(models.Model):
     
     def __str__(self):
         return self.concourseTypeField
-    
+    """  """
     
 class Concourse(models.Model):
     concourseName = models.CharField(max_length=100, blank=False, null=False)
