@@ -12,7 +12,7 @@ class ConcourseTypeField(models.Model):
     
     def __str__(self):
         return self.concourseTypeField
-    
+    """  """
     
 class Concourse(models.Model):
     concourseName = models.CharField(max_length=100, blank=False, null=False)
@@ -59,7 +59,6 @@ class LatestNews(models.Model):
     
     
     
-  ### Still to be done...  
 class ConcourseRegistration(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="concourseUser")
     concourse = models.ForeignKey(Concourse, on_delete=models.CASCADE, related_name="concourse")

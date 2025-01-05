@@ -234,7 +234,6 @@ class ConcourseRegistrationViewSet(viewsets.ViewSet):
         # Interacting with the payment gateway
         phone_number = serializer.validated_data.get('phoneNumber')
         payment_results = make_payment(application_key, access_key, secret_key, amount=11, service='MTN', payer=phone_number, trxID='1')
-        payment_response = self.process_payment_gateway(request.user, serializer.validated_data)
         
         # Simulate payment response(This will be replae with the actual API intergration)
         if not payment_results["Operation Success"] or not payment_results["Transaction Success"]:
