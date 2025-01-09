@@ -12,7 +12,6 @@ class CommentSerializer(serializers.ModelSerializer):
 class PostSerializer(serializers.ModelSerializer):
     comments = CommentSerializer(many=True, read_only=True)
     post_user = serializers.StringRelatedField(source='post_user.username', read_only=True)
-    # category = serializers.StringRelatedField(source='category.name', read_only=True)
     category = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all())  # Expecting category ID
     # category = serializers.StringRelatedField() 
     class Meta:
@@ -25,6 +24,11 @@ class PostSerializer(serializers.ModelSerializer):
             }
         }
 
+    def to_representation(self, instance):
+        # Use String representation for the category when serializing
+        representation = super().to_representation(instance)
+        representation['category'] = str(instance.category) 
+        return representation
 class CategorySerializer(serializers.ModelSerializer):
     posts = PostSerializer(many=True, read_only=True)
     class Meta:
