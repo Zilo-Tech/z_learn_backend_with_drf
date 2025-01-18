@@ -28,7 +28,8 @@ class ConcourseTypeFieldViewSet(viewsets.ModelViewSet):
     
 class ConcourseViewSet(viewsets.ViewSet):
     permission_classes = [AdminUserOrReadOnly]
-    
+    ter_backends = [DjangoFilterBackend]
+    filterset_fields = ['is_active', 'concourseType__concourseTypeField']
     @extend_schema(
         description = "List all Concourse",
         responses = {

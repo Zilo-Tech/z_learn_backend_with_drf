@@ -13,6 +13,7 @@ from chat_section.models import Post, Comment, Category
 from .permissions import PostUserOrNot, CommentUserOrNot, IsAdminOrReadOnly
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema, OpenApiResponse
+from django_filters.rest_framework import DjangoFilterBackend
 
 # from drf_spectacular.utils import extend_schema, OpenApiResponse
 
