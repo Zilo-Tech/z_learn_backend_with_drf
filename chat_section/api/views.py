@@ -13,15 +13,20 @@ from chat_section.models import Post, Comment, Category
 from .permissions import PostUserOrNot, CommentUserOrNot, IsAdminOrReadOnly
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema, OpenApiResponse
+from django_filters.rest_framework import DjangoFilterBackend
 
 # from drf_spectacular.utils import extend_schema, OpenApiResponse
-
-
 
 class CategoryViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAdminOrReadOnly]
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
+    
+    @action(detail=False, methods = ['get'])
+    def get_category_name(self, request):
+        categories = self.queryset.values_list('name', flat=True)
+        return Response(categories)
+        
     
 class PostViewSet(viewsets.ViewSet):
     permission_classes = [PostUserOrNot, IsAuthenticatedOrReadOnly]

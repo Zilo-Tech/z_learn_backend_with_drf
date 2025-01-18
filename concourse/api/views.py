@@ -13,6 +13,7 @@ from .permissions import AdminUserOrReadOnly
 from drf_spectacular.utils import extend_schema, OpenApiResponse
 from rest_framework.decorators import action, permission_classes
 from .payment import make_payment
+from django_filters.rest_framework import DjangoFilterBackend
 
 
 # Secret keys not to be here
@@ -26,9 +27,10 @@ class ConcourseTypeFieldViewSet(viewsets.ModelViewSet):
     serializer_class = ConcourseTypeFieldSerializer
     queryset = ConcourseTypeField.objects.all()
     
-class ConcourseViewSet(viewsets.ViewSet):
+class ConcourseViewSet(viewsets.GenericViewSet):
     permission_classes = [AdminUserOrReadOnly]
-    
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['is_active', 'concourseType__concourseTypeField']
     @extend_schema(
         description = "List all Concourse",
         responses = {
@@ -38,6 +40,7 @@ class ConcourseViewSet(viewsets.ViewSet):
     )
     def list(self, request):
         queryset = Concourse.objects.filter(is_active=True)
+        queryset = self.filter_queryset(queryset)  # Apply the filters from request
         serializer = ConcourseSerializer(queryset, many=True)
         return Response(serializer.data)
     
