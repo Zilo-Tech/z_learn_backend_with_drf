@@ -73,7 +73,7 @@ class ConcourseViewSet(viewsets.GenericViewSet):
         return Response(serializer.errors, status =status.HTTP_400_BAD_REQUEST)
     
     @extend_schema(
-        description = "Update a new Concourse",
+        description = "Update a neew Concourse",
         responses = {
             200: ConcourseSerializer,
             403: OpenApiResponse(response={"error": "You are not authorized to view concourses."}, description="You are not authorized to view concourses."),
