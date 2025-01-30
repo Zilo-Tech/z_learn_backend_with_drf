@@ -217,6 +217,7 @@ STORAGES = {
     },
 }
 AWS_FOLDER = 'ZLearn'
+AWS_LOCATION = AWS_FOLDER
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{AWS_FOLDER}/static/'
 STATICFILES_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
