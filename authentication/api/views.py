@@ -102,3 +102,15 @@ class CustomAuthToken(ObtainAuthToken):
         return Response(response_data, status = status.HTTP_200_OK)  
     
     
+
+# https://z-learn-backend-with-drf.onrender.com/account/login/
+
+
+# https://z-learn-backend-with-drf.onrender.com/account/users/delete_token/
+
+
+# // {
+# //   "username": "Kongnyuy",
+# //   "password": "TypeScript01@@"
+# // }  
+# cbb
