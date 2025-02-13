@@ -1,8 +1,8 @@
 from .serializers import (LatestNewsSerializer, ConcourseDepartmentSerializer,
-                          ConcourseSerializer, ConcourseRegistrationSerializer, ConcourseTypeFieldSerializer)
+                          ConcourseSerializer, ConcourseRegistrationSerializer, ConcourseTypeFieldSerializer, ConcoursePastPapersSerializer)
 
 from concourse.models import (Concourse, ConcourseDepartment, LatestNews,
-                              ConcourseRegistration, ConcourseTypeField)
+                              ConcourseRegistration, ConcourseTypeField, ConcoursePastPapers)
 
 from django.shortcuts import get_object_or_404
 from rest_framework import viewsets
@@ -300,3 +300,18 @@ class ConcourseRegistrationViewSet(viewsets.ViewSet):
         count = ConcourseRegistration.objects.filter(concourse = concourse, payment_status=True).count()
         print("Total students are: ${count}")
         return Response({'total_users_enrolled': count}, status=status.HTTP_200_OK)
+    
+    
+
+class ConcoursePastPapersViewSet(viewsets.ViewSet):
+    @extend_schema(
+        description = "Display Concourse a user have enrolled in",
+        responses = {
+            201: ConcourseRegistrationSerializer(),
+        }
+    )
+    def list(self, request, concourse_id=None):
+        concourse = get_object_or_404(Concourse, id=concourse_id)
+        past_papers = concourse.past_papers.all()
+        serializer = ConcoursePastPapersSerializer(past_papers, many=True)
+        return Response(serializer.data)
