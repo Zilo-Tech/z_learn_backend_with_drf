@@ -84,9 +84,21 @@ class ConcourseRegistration(models.Model):
 
 
 
+class ConcoursePastPapers(models.Model):
+    concourse = models.ForeignKey(Concourse, on_delete=models.CASCADE, related_name='past_papers')
+    
+    subject = models.CharField(max_length=255)
+    file = models.FileField(upload_to='concourse/past_papers/')
+    created_at = models.DateTimeField(auto_now_add=True)
+    year = models.IntegerField()
+    
+    
+    def __str__(self):
+        return f"{self.subject} - {self.year}"
+
+
 
 # Other models i could include are..
-
 class ConcourseResource(models.Model):
     title = models.CharField(max_length=100)
     description = models.TextField(blank=True, null=True)

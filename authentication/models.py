@@ -5,14 +5,6 @@ from rest_framework.authtoken.models import Token
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.contrib.auth.models import AbstractUser, Group, Permission
-import random
-import string
-from django.utils import timezone
-from django.contrib.auth import get_user_model
-from django.db import models
-
-
-User = get_user_model()
 
 
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)
@@ -51,17 +43,3 @@ class CustomUser(AbstractUser):
         help_text='Specific permissions for this user.',
         related_query_name='customuser',
     )
-    
-
-class PasswordResetOTP(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    otp = models.CharField(max_length=6)  # Store OTP
-    created_at = models.DateTimeField(auto_now_add=True)  # Store creation time
-    is_used = models.BooleanField(default=False)  # Prevent reuse
-
-    def is_expired(self):
-        """Check if OTP is expired (valid for 10 minutes)"""
-        return timezone.now() > self.created_at + timezone.timedelta(minutes=10)
-
-    def __str__(self):
-        return f"OTP for {self.user.email}"

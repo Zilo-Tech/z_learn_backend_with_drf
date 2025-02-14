@@ -199,15 +199,6 @@ AWS_S3_FILE_OVERWRITE = False  # Prevent overwriting files with the same name
 AWS_DEFAULT_ACL = None
 AWS_QUERYSTRING_AUTH = False
 
-# Email settings
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_HOST = config("EMAIL_HOST")
-EMAIL_PORT = config("EMAIL_PORT", cast=int)
-EMAIL_USE_TLS = config("EMAIL_USE_TLS", cast=bool)
-EMAIL_HOST_USER = config("EMAIL_HOST_USER")
-EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD")
-DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL")
-
 # Use the S3Boto3Storage backend for media files
 STORAGES = {
     "default": {
@@ -226,7 +217,6 @@ STORAGES = {
     },
 }
 AWS_FOLDER = 'ZLearn'
-AWS_LOCATION = AWS_FOLDER
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{AWS_FOLDER}/static/'
 STATICFILES_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
