@@ -15,6 +15,10 @@ from pathlib import Path
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 import os
+import dj_database_url
+from decouple import config
+
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
@@ -110,6 +114,9 @@ DATABASES = {
     }
 }
 
+database_url = config("DATABASE_URL")
+DATABASES["default"] = dj_database_url.parse(database_url) # cinfugured on nyuydineleynyuy-email
+
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
@@ -185,7 +192,6 @@ CORS_ALLOW_ALL_ORIGINS = True
 # }
 
 # AWS S3 settings
-from decouple import config
 
 # AWS S3 settings from .env
 AWS_ACCESS_KEY_ID = config('AWS_ACCESS_KEY_ID')
