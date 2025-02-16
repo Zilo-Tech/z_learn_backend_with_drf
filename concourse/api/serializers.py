@@ -16,9 +16,11 @@ class LatestNewsSerializer(serializers.ModelSerializer):
 class ConcourseRegistrationSerializer(serializers.ModelSerializer):
     user = serializers.StringRelatedField(read_only=True)
     concourse = serializers.StringRelatedField(read_only=True)
+    payment_service = serializers.ChoiceField(choices=[('MTN', 'MTN'), ('ORANGE', 'ORANGE')], write_only=True)
+
     class Meta: 
         model = ConcourseRegistration
-        fields = ["phoneNumber", "user", "concourse"]
+        fields = ["phoneNumber", "user", "concourse", "payment_service"]
         read_only_fields = ['concourse', 'user']
         
 class ConcourseDepartmentSerializer(serializers.ModelSerializer):
@@ -64,6 +66,11 @@ class ConcourseTypeFieldSerializer(serializers.ModelSerializer):
         
         
 
+class ConcoursePastPapersSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ConcoursePastPapers
+        fields = "__all__"
+        
 class ConcoursePastPapersSerializer(serializers.ModelSerializer):
     class Meta:
         model = ConcoursePastPapers

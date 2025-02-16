@@ -1,7 +1,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import (LatestNewsViewSet, ConcourseViewSet, LatestNewsViewSet, 
-                    ConcourseDepartmentViewSet, ConcourseTypeFieldViewSet, ConcourseRegistrationViewSet, ConcoursePastPapersViewSet)
+                    ConcourseDepartmentViewSet, ConcourseTypeFieldViewSet, ConcourseRegistrationViewSet, ConcoursePastPapersView,ConcoursePastPaperDetailView)
 
 router = DefaultRouter()
 # router.register(r'latest_news', LatestNewsViewSet, basename='latest_news')
@@ -50,10 +50,6 @@ total_number_of_students = ConcourseRegistrationViewSet.as_view({
 
 
 
-past_paper = ConcoursePastPapersViewSet.as_view({
-    "get": "list"
-})
-
 
 urlpatterns = [
     path('', include(router.urls)),
@@ -76,5 +72,7 @@ urlpatterns = [
     path('concourse/<int:concourse_id>/total_users_enroll_for_concourse', total_number_of_students, name='total_users_enroll_for_concourse'),
     
     
-    path("concourse/<int:concourse_id>/past_paper", past_paper, name="past-paper"),
+    path('concourse/<int:concourse_id>/past-papers/', ConcoursePastPapersView.as_view(), name='concourse-past-papers'),
+    path('concourse/<int:concourse_id>/past-papers/<int:paper_id>/', ConcoursePastPaperDetailView.as_view(), name='concourse-past-paper-detail'),
+
 ]
