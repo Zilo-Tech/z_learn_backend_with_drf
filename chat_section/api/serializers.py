@@ -13,7 +13,7 @@ class PostSerializer(serializers.ModelSerializer):
     comments = CommentSerializer(many=True, read_only=True)
     post_user = serializers.StringRelatedField(source='post_user.username', read_only=True)
     # category = serializers.StringRelatedField(source='category.name', read_only=True)
-    category = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all())  # Expecting category ID
+    category = serializers.CharField()  # Expecting category ID
     # category = serializers.StringRelatedField() 
     class Meta:
         model = Post
@@ -25,6 +25,33 @@ class PostSerializer(serializers.ModelSerializer):
             }
         }
 
+
+    def create(self, validated_data):
+        # Extract category name
+        category_name = validated_data.pop('category')
+        
+        # Get or create category based on name
+        category, created = Category.objects.get_or_create(name=category_name)
+
+        # Create the post instance with the category
+        post = Post.objects.create(category=category, **validated_data)
+        return post
+
+    def update(self, instance, validated_data):
+        # Extract category name
+        category_name = validated_data.pop('category', None)
+        
+        if category_name:
+            # Get or create category based on name
+            category, created = Category.objects.get_or_create(name=category_name)
+            instance.category = category
+
+        # Update other fields
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        return instance
+    
 class CategorySerializer(serializers.ModelSerializer):
     posts = PostSerializer(many=True, read_only=True)
     class Meta:

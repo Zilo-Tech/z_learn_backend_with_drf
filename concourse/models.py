@@ -86,7 +86,6 @@ class ConcourseRegistration(models.Model):
 
 class ConcoursePastPapers(models.Model):
     concourse = models.ForeignKey(Concourse, on_delete=models.CASCADE, related_name='past_papers')
-    
     subject = models.CharField(max_length=255)
     file = models.FileField(upload_to='concourse/past_papers/')
     created_at = models.DateTimeField(auto_now_add=True)

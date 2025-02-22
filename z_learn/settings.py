@@ -10,7 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
-from pathlib import Path 
+from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -37,7 +37,7 @@ DEBUG = True
 #     '10.0.2.2',
 #     '0.0.0.0',    
 #     '192.168.1.109',
-    
+   
 # ]
 
 ALLOWED_HOSTS = ["*"]
@@ -51,14 +51,14 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    
+   
     'rest_framework',
     'drf_yasg',
     'rest_framework.authtoken',
     'drf_spectacular',
     'corsheaders',
     'django_filters',
-    
+   
     'authentication',
     'annoucement_news',
     'chat_section',
@@ -106,6 +106,10 @@ WSGI_APPLICATION = 'z_learn.wsgi.application'
 # DATABASES = {
 #     'default': dj_database_url.parse(os.environ.get('DATABASE_URL'))
 # }
+
+
+DATABASE_URL = config('DATABASE_URL')
+print(f"DATABASE_URL: {DATABASE_URL}") 
 
 DATABASES = {
     'default': {
@@ -183,7 +187,7 @@ SPECTACULAR_SETTINGS = {
     # OTHER SETTINGS
 }
 
-CORS_ALLOW_ALL_ORIGINS = True 
+CORS_ALLOW_ALL_ORIGINS = True
 
 
 # REST_FRAMEWORK = {
