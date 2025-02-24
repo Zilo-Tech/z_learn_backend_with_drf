@@ -39,6 +39,8 @@ class PostViewSet(viewsets.ViewSet):
         return Response(serializer.data, status = status.HTTP_200_OK)
     
     def create(self, request, *args, **kwargs):
+        self.permission_classes = [permissions.IsAuthenticated]
+        self.check_permissions(request)
         """ Handle POST requests to create a Post for a user """
         user = request.user 
         serializer = PostSerializer(data = request.data)

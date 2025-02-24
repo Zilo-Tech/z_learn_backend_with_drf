@@ -16,11 +16,20 @@ class LatestNewsSerializer(serializers.ModelSerializer):
 class ConcourseRegistrationSerializer(serializers.ModelSerializer):
     user = serializers.StringRelatedField(read_only=True)
     concourse = serializers.StringRelatedField(read_only=True)
+    payment_service = serializers.ChoiceField(choices=[('MTN', 'MTN'), ('ORANGE', 'ORANGE')], write_only=True)
+
     class Meta: 
         model = ConcourseRegistration
-        fields = ["phoneNumber", "user", "concourse"]
+        fields = ["phoneNumber", "user", "concourse", "payment_service"]
         read_only_fields = ['concourse', 'user']
-        
+    
+    def create(self, validated_data):
+        payment_service = validated_data.pop('payment_service', None)  # Remove payment_service from validated_data
+        # Create the registration without payment_service
+        registration = super().create(validated_data)
+        # Optionally, handle the payment_service logic here if needed
+        return registration
+    
 class ConcourseDepartmentSerializer(serializers.ModelSerializer):
     latestNews = LatestNewsSerializer(many=True, read_only=True)
     concourse = ConcourseRegistrationSerializer(many=True, read_only=True)
@@ -64,6 +73,11 @@ class ConcourseTypeFieldSerializer(serializers.ModelSerializer):
         
         
 
+class ConcoursePastPapersSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ConcoursePastPapers
+        fields = "__all__"
+        
 class ConcoursePastPapersSerializer(serializers.ModelSerializer):
     class Meta:
         model = ConcoursePastPapers

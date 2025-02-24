@@ -14,6 +14,10 @@ from drf_spectacular.utils import extend_schema, OpenApiResponse
 from rest_framework.decorators import action, permission_classes
 from .payment import make_payment
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.exceptions import PermissionDenied
+from rest_framework import generics, permissions
+
+
 
 
 # Secret keys not to be here
@@ -222,11 +226,10 @@ class ConcourseDepartmentViewSet(viewsets.ViewSet):
 
 class ConcourseRegistrationViewSet(viewsets.ViewSet):
     @extend_schema(
-        description = "Create ConcourseRegistration of a particular Concourse",
-        responses = {
-            201: ConcourseRegistrationSerializer(),
-        })
-    @action(detail=True, methods=['post'], url_path = 'register_and_confirm_payment')
+        description="Create ConcourseRegistration of a particular Concourse",
+        responses={201: ConcourseRegistrationSerializer()},
+    )
+    @action(detail=True, methods=['post'], url_path='register_and_confirm_payment')
     @permission_classes([IsAuthenticated])
     def register_and_confirm_payment(self, request, concourse_id=None):
         concourse = get_object_or_404(Concourse, id=concourse_id)
@@ -236,82 +239,99 @@ class ConcourseRegistrationViewSet(viewsets.ViewSet):
         
         # Interacting with the payment gateway
         phone_number = serializer.validated_data.get('phoneNumber')
-        payment_results = make_payment(application_key, access_key, secret_key, amount=11, service='MTN', payer=phone_number, trxID='1')
+        payment_service = serializer.validated_data.get('payment_service')
+        payment_results = make_payment(application_key, access_key, secret_key, amount=11, service=payment_service, payer=phone_number, trxID='1')
         
-        # Simulate payment response(This will be replae with the actual API intergration)
+        # Simulate payment response(This will be replaced with the actual API integration)
         if not payment_results["Operation Success"] or not payment_results["Transaction Success"]:
-            return Response({'error': 'Payment failed. Registrations is not completed'}, status = status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'Payment failed. Registration is not completed'}, status=status.HTTP_400_BAD_REQUEST)
         
         # Save the registration details
-        registration = serializer.save(concourse = concourse, user = request.user, payment_status=True)
+        registration = serializer.save(concourse=concourse, user=request.user, payment_status=True)
         return Response(ConcourseRegistrationSerializer(registration).data, status=status.HTTP_201_CREATED)
-        
     
-    @action(detail=True, methods=['get'], url_path = 'concourse_list_all_users')
+    @action(detail=True, methods=['get'], url_path='concourse_list_all_users')
     @permission_classes([IsAuthenticated, IsAdminUser])
     @extend_schema(
-        description = "List all users registed for a particular concourse done by Admin",
-        responses = {
+        description="List all users registered for a particular concourse done by Admin",
+        responses={
             200: ConcourseRegistrationSerializer(many=True),
             403: OpenApiResponse(response={"error": "You are not authorized to view concourses."}, description="You are not authorized to view concourses."),
-        })
+        }
+    )
     def concourse_list_all_users(self, request, concourse_id=None):
         self.permission_classes = [IsAuthenticated, IsAdminUser]
         self.check_permissions(request)
         
         concourse = get_object_or_404(Concourse, id=concourse_id)
-        registrations = ConcourseRegistration.objects.filter(concourse = concourse, payment_status = True)
+        registrations = ConcourseRegistration.objects.filter(concourse=concourse, payment_status=True)
         serializer = ConcourseRegistrationSerializer(registrations, many=True)
-        return Response(serializer.data, status = status.HTTP_200_OK)
+        return Response(serializer.data, status=status.HTTP_200_OK)
     
-    
-    
-    @action(detail=False, methods=['get'], url_path = 'my_concourse_registered')
-    @permission_classes([IsAuthenticated, IsAdminUser])
+    @action(detail=False, methods=['get'], url_path='my_concourse_registered')
+    @permission_classes([IsAuthenticated])
     @extend_schema(
-        description = "List all concourse a user has enrolled for ",
-        responses = {
+        description="List all concourses a user has enrolled for",
+        responses={
             200: ConcourseRegistrationSerializer(many=True),
             403: OpenApiResponse(response={"error": "You are not authorized to view concourses."}, description="You are not authorized to view concourses."),
-        })
-    
+        }
+    )
     def my_concourse_registered(self, request):
-        self.permissions_classes = [IsAuthenticated]
+        self.permission_classes = [IsAuthenticated]
         self.check_permissions(request)
         user = request.user
-        registration = ConcourseRegistration.objects.filter(user = user)
+        registration = ConcourseRegistration.objects.filter(user=user)
         if not registration.exists():
             return Response({"error": "You have not registered for any concourse yet."}, status=status.HTTP_404_NOT_FOUND)
         serializer = ConcourseRegistrationSerializer(registration, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
     
-    
-    
-    @action(detail=True, method=['get'], url_path = 'total_users_enroll_for_concourse')
+    @action(detail=True, methods=['get'], url_path='total_users_enroll_for_concourse')
     @extend_schema(
-        description = "Display total number of users registered for a given Concourse",
-        responses = {
-            200: ConcourseRegistrationSerializer(),
+        description="Display total number of users registered for a given Concourse",
+        responses={
+            200: OpenApiResponse(response={"total_users_enrolled": int}, description="Total number of users enrolled."),
             403: OpenApiResponse(response={"error": "You are not authorized to view concourses."}, description="You are not authorized to view concourses."),
-    })
-
-    def total_users_enroll_for_concourse(self, request, concourse_id = None):
+        }
+    )
+    def total_users_enroll_for_concourse(self, request, concourse_id=None):
         concourse = get_object_or_404(Concourse, id=concourse_id)
-        count = ConcourseRegistration.objects.filter(concourse = concourse, payment_status=True).count()
-        print("Total students are: ${count}")
+        count = ConcourseRegistration.objects.filter(concourse=concourse, payment_status=True).count()
         return Response({'total_users_enrolled': count}, status=status.HTTP_200_OK)
     
     
 
-class ConcoursePastPapersViewSet(viewsets.ViewSet):
-    @extend_schema(
-        description = "Display Concourse a user have enrolled in",
-        responses = {
-            201: ConcourseRegistrationSerializer(),
-        }
-    )
-    def list(self, request, concourse_id=None):
-        concourse = get_object_or_404(Concourse, id=concourse_id)
-        past_papers = concourse.past_papers.all()
-        serializer = ConcoursePastPapersSerializer(past_papers, many=True)
-        return Response(serializer.data)
+class ConcoursePastPapersView(generics.ListAPIView):
+    serializer_class = ConcoursePastPapersSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        concourse_id = self.kwargs['concourse_id']
+        
+        # Check if the user has paid for the concourse
+        registration = ConcourseRegistration.objects.filter(user=user, concourse_id=concourse_id, payment_status=True).first()
+        if not registration:
+            raise PermissionDenied("You have not paid for this concourse.")
+        
+        # Return past papers for the concourse
+        return ConcoursePastPapers.objects.filter(concourse_id=concourse_id)
+    
+#for single paperrr
+class ConcoursePastPaperDetailView(generics.RetrieveAPIView):
+    serializer_class = ConcoursePastPapersSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self):
+        user = self.request.user
+        concourse_id = self.kwargs['concourse_id']
+        paper_id = self.kwargs['paper_id']
+        
+        # Check if the user has paid for the concourse
+        registration = ConcourseRegistration.objects.filter(user=user, concourse_id=concourse_id, payment_status=True).first()
+        if not registration:
+            raise PermissionDenied("You have not paid for this concourse.")
+        
+        # Return the specific past paper for the concourse
+        return ConcoursePastPapers.objects.get(id=paper_id, concourse_id=concourse_id)
