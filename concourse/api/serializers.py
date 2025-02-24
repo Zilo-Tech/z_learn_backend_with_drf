@@ -22,7 +22,14 @@ class ConcourseRegistrationSerializer(serializers.ModelSerializer):
         model = ConcourseRegistration
         fields = ["phoneNumber", "user", "concourse", "payment_service"]
         read_only_fields = ['concourse', 'user']
-        
+    
+    def create(self, validated_data):
+        payment_service = validated_data.pop('payment_service', None)  # Remove payment_service from validated_data
+        # Create the registration without payment_service
+        registration = super().create(validated_data)
+        # Optionally, handle the payment_service logic here if needed
+        return registration
+    
 class ConcourseDepartmentSerializer(serializers.ModelSerializer):
     latestNews = LatestNewsSerializer(many=True, read_only=True)
     concourse = ConcourseRegistrationSerializer(many=True, read_only=True)

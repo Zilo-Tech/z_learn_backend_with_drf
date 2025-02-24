@@ -64,7 +64,7 @@ class ConcourseRegistration(models.Model):
     concourse = models.ForeignKey(Concourse, on_delete=models.CASCADE, related_name="concourse")
     application_date = models.DateTimeField(auto_now_add=True)
     payment_status = models.BooleanField(default=False)
-    
+    payment_service = models.CharField(max_length=20, default = 'MTN')
     phone_regex = RegexValidator(
         regex=r'^\d{7,10}$',  # Adjust the length as necessary (7 to 10 digits)
         message="Phone number must be entered as digits only and must be between 7 and 10 digits."
