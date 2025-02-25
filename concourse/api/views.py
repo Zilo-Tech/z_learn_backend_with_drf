@@ -339,7 +339,11 @@ class ConcoursePastPaperDetailView(generics.RetrieveAPIView):
     
 
 class ConcourseResourceListView(generics.ListAPIView):
-    queryset = ConcourseResource.objects.all()
     serializer_class = ConcourseResourceSerializer
-    filter_backends = [SearchFilter]
-    search_fields = ['category']
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        concourse_id = self.kwargs['concourse_id']
+        registered_concourses = ConcourseRegistration.objects.filter(user=user).values_list('concourse_id', flat=True)
+        return ConcourseResource.objects.filter(concourse_id=concourse_id, concourse_id__in=registered_concourses)

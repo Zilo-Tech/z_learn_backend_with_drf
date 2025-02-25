@@ -75,6 +75,6 @@ urlpatterns = [
     path('concourse/<int:concourse_id>/past-papers/', ConcoursePastPapersView.as_view(), name='concourse-past-papers'),
     path('concourse/<int:concourse_id>/past-papers/<int:paper_id>/', ConcoursePastPaperDetailView.as_view(), name='concourse-past-paper-detail'),
 
-    path('resources/', ConcourseResourceListView.as_view(), name='concourse-resource-list'),
+    path('<int:concourse_id>/resources/', ConcourseResourceListView.as_view(), name='concourse-resource-list'),
 
 ]
