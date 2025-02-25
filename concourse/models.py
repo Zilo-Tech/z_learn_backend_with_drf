@@ -99,11 +99,19 @@ class ConcoursePastPapers(models.Model):
 
 # Other models i could include are..
 class ConcourseResource(models.Model):
+    CATEGORY_CHOICES = [
+        ('document', 'Document'),
+        ('link', 'Link'),
+        ('lab_session', 'Lab Session'),
+        ('paper', 'Paper'),
+    ]
+
     title = models.CharField(max_length=100)
     description = models.TextField(blank=True, null=True)
     concourse = models.ForeignKey(Concourse, on_delete=models.CASCADE, related_name="resources")
     resource_file = models.FileField(upload_to="resources/", blank=True, null=True)
     url = models.URLField(blank=True, null=True)
+    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES)
     created_date = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

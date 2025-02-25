@@ -1,7 +1,7 @@
 from .serializers import (LatestNewsSerializer, ConcourseDepartmentSerializer,
-                          ConcourseSerializer, ConcourseRegistrationSerializer, ConcourseTypeFieldSerializer, ConcoursePastPapersSerializer)
+                          ConcourseSerializer, ConcourseRegistrationSerializer, ConcourseTypeFieldSerializer, ConcoursePastPapersSerializer,ConcourseResourceSerializer)
 
-from concourse.models import (Concourse, ConcourseDepartment, LatestNews,
+from concourse.models import (Concourse, ConcourseDepartment, LatestNews,ConcourseResource,
                               ConcourseRegistration, ConcourseTypeField, ConcoursePastPapers)
 
 from django.shortcuts import get_object_or_404
@@ -16,6 +16,7 @@ from .payment import make_payment
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.exceptions import PermissionDenied
 from rest_framework import generics, permissions
+from rest_framework.filters import SearchFilter
 
 
 
@@ -335,3 +336,10 @@ class ConcoursePastPaperDetailView(generics.RetrieveAPIView):
         
         # Return the specific past paper for the concourse
         return ConcoursePastPapers.objects.get(id=paper_id, concourse_id=concourse_id)
+    
+
+class ConcourseResourceListView(generics.ListAPIView):
+    queryset = ConcourseResource.objects.all()
+    serializer_class = ConcourseResourceSerializer
+    filter_backends = [SearchFilter]
+    search_fields = ['category']
