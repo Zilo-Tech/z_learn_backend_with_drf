@@ -20,7 +20,7 @@ class ConcourseRegistrationSerializer(serializers.ModelSerializer):
 
     class Meta: 
         model = ConcourseRegistration
-        fields = ["phoneNumber", "user", "concourse", "payment_service"]
+        fields = ["phoneNumber", "user", "concourse", "payment_service", "id"]
         read_only_fields = ['concourse', 'user']
     
     def create(self, validated_data):
@@ -77,11 +77,7 @@ class ConcoursePastPapersSerializer(serializers.ModelSerializer):
     class Meta:
         model = ConcoursePastPapers
         fields = "__all__"
-        
-class ConcoursePastPapersSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ConcoursePastPapers
-        fields = "__all__"
+    
         
 class ConcourseResourceSerializer(serializers.ModelSerializer):
     class Meta:
