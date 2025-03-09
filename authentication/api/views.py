@@ -38,6 +38,7 @@ class RegisterUser(viewsets.ViewSet):
             data['response'] = 'Registration Successful!'
             data['username'] = account.username
             data['email'] = account.email
+            data['whatsapp_number'] = account.whatsapp_number
              
             token = Token.objects.get(user = account).key
             data['token'] = token
