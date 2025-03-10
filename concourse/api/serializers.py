@@ -5,12 +5,7 @@ from rest_framework import serializers
 class LatestNewsSerializer(serializers.ModelSerializer):
     class Meta:
         model = LatestNews
-        fields = ['id',
-                  'title', 
-                  'newsDate', 
-                  'content', 
-                  'pdf', 
-                  'is_published']
+        fields = "__all__"
         read_only_fields = ['concourse']
 
 class ConcourseRegistrationSerializer(serializers.ModelSerializer):
