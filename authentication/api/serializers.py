@@ -8,9 +8,9 @@ class UserSerializer(serializers.ModelSerializer):
     password2 = serializers.CharField(
         style={'input_type': 'password'},
         write_only=True
-        )
-    whatsapp_number = serializers.CharField(required=True)
-    
+    )
+    whatsapp_number = serializers.CharField(required=False, allow_blank=True)
+
     class Meta:
         model = User 
         fields = ['username', 'password', 'email', 'password2', 'whatsapp_number']
