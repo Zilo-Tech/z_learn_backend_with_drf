@@ -64,6 +64,7 @@ INSTALLED_APPS = [
     'chat_section',
     'concourse',
     'storages',
+    'AI',
 
 ]
 

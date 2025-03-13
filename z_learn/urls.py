@@ -42,6 +42,7 @@ urlpatterns = [
    path('notification/', include('annoucement_news.api.urls')),
    path('chat_section/', include('chat_section.api.urls')),
    path('concourse/', include('concourse.api.urls')),
+   path('ai/', include('AI.urls')),
 ]
 
 if settings.DEBUG:
