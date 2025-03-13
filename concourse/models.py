@@ -113,7 +113,7 @@ class ConcourseResource(models.Model):
     url = models.URLField(blank=True, null=True)
     category = models.CharField(max_length=20, choices=CATEGORY_CHOICES)
     created_date = models.DateTimeField(auto_now_add=True)
-
+    subject = models.CharField(max_length=80)
     def __str__(self):
         return self.title
 

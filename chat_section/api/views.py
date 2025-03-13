@@ -34,7 +34,7 @@ class PostViewSet(viewsets.ViewSet):
     
     
     def list(self, request):
-        queryset = Post.objects.all()
+        queryset = Post.objects.all().order_by("-date_created")
         serializer = self.serializer_class(queryset, many=True)
         return Response(serializer.data, status = status.HTTP_200_OK)
     
@@ -122,7 +122,7 @@ class CommentViewSet(viewsets.ViewSet):
     def list(self, request, post_id=None):
         """List comments for a specific post"""
         post = get_object_or_404(Post, id=post_id)
-        comments = post.comments.all()  # Uses the related_name "comments"
+        comments = post.comments.all().order_by("-date_created")  # Uses the related_name "comments"
         serializer = self.serializer_class(comments, many=True)
         return Response(serializer.data)
 

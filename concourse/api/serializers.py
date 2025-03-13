@@ -5,12 +5,7 @@ from rest_framework import serializers
 class LatestNewsSerializer(serializers.ModelSerializer):
     class Meta:
         model = LatestNews
-        fields = ['id',
-                  'title', 
-                  'newsDate', 
-                  'content', 
-                  'pdf', 
-                  'is_published']
+        fields = "__all__"
         read_only_fields = ['concourse']
 
 class ConcourseRegistrationSerializer(serializers.ModelSerializer):
@@ -20,7 +15,7 @@ class ConcourseRegistrationSerializer(serializers.ModelSerializer):
 
     class Meta: 
         model = ConcourseRegistration
-        fields = ["phoneNumber", "user", "concourse", "payment_service"]
+        fields = ["phoneNumber", "user", "concourse", "payment_service", "id"]
         read_only_fields = ['concourse', 'user']
     
     def create(self, validated_data):
@@ -40,7 +35,8 @@ class ConcourseDepartmentSerializer(serializers.ModelSerializer):
 
 class ConcourseSerializer(serializers.ModelSerializer):
     concourseTypeName = serializers.CharField(source='concourseType.concourseTypeField', read_only=True)
-    # departments = ConcourseDepartmentSerializer(many=True, read_only=True)
+    departments = ConcourseDepartmentSerializer(many=True, read_only=True)
+    latestNews = LatestNewsSerializer(many=True, read_only=True)
     class Meta:
         model = Concourse
         fields = [
@@ -57,7 +53,8 @@ class ConcourseSerializer(serializers.ModelSerializer):
             'schoolPicture',
             'created_by',
             'concourseTypeName', 
-            # 'departments',
+            'departments',
+            'latestNews'
         ]       
         read_only_fields = ['concourseType']
         # extra_fields = {
@@ -77,11 +74,7 @@ class ConcoursePastPapersSerializer(serializers.ModelSerializer):
     class Meta:
         model = ConcoursePastPapers
         fields = "__all__"
-        
-class ConcoursePastPapersSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ConcoursePastPapers
-        fields = "__all__"
+    
         
 class ConcourseResourceSerializer(serializers.ModelSerializer):
     class Meta:
