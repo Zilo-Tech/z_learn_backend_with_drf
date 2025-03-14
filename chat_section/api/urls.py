@@ -35,4 +35,7 @@ urlpatterns = [
     path('concourse/<int:concourse_id>/posts/<int:post_id>/comments/<int:pk>/', concour_comments, name='concour-comment-detail'),
     path('concourse/<int:concourse_id>/posts/<int:pk>/like/', ConcourPostViewSet.as_view({'post': 'like'}), name='concour-post-like'),
     path('concourse/<int:concourse_id>/posts/<int:pk>/dislike/', ConcourPostViewSet.as_view({'post': 'dislike'}), name='concour-post-dislike'),
+    path('concourse/<int:concourse_id>/posts/<int:post_id>/comments/<int:pk>/like/', ConcourCommentViewSet.as_view({'post': 'like'}), name='concour-comment-like'),
+    path('post_questions/<int:pk>/dislike/', PostViewSet.as_view({'post': 'dislike'}), name='post-dislike'),
+    path('post/<int:post_id>/comments/<int:pk>/like/', CommentViewSet.as_view({'post': 'like'}), name='comment-like'),
 ]

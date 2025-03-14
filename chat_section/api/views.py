@@ -83,6 +83,13 @@ class PostViewSet(viewsets.ViewSet):
         post.save()
         return Response({'status': 'Post liked'}, status = status.HTTP_200_OK)
 
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    def dislike(self, request, pk=None):
+        post = get_object_or_404(Post, pk=pk)
+        post.downvotes += 1
+        post.save()
+        return Response({'status': 'Post disliked'}, status=status.HTTP_200_OK)
+
     @action(detail=False, methods=['get'])
     @extend_schema(
         description = "List all trending posts",
@@ -211,62 +218,79 @@ class ConcourPostViewSet(viewsets.ViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    def retrieve(self, request, concourse_id=None, pk=None):
+        post = get_object_or_404(ConcourPost, pk=pk, concourse_id=concourse_id)
+        post.views += 1
+        post.save()
+        serializer = self.serializer_class(post)
+        return Response(serializer.data)
+
+    def update(self, request, concourse_id=None, pk=None):
+        post = get_object_or_404(ConcourPost, pk=pk, concourse_id=concourse_id)
+        self.check_object_permissions(request, post)
+        serializer = self.serializer_class(post, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def destroy(self, request, concourse_id=None, pk=None):
+        post = get_object_or_404(ConcourPost, pk=pk, concourse_id=concourse_id)
+        self.check_object_permissions(request, post)
+        post.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
-    def like(self, request, pk=None):
-        post = get_object_or_404(ConcourPost, pk=pk)
+    def like(self, request, concourse_id=None, pk=None):
+        post = get_object_or_404(ConcourPost, pk=pk, concourse_id=concourse_id)
         post.upvotes += 1
         post.save()
         return Response({'status': 'Post liked'}, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
-    def dislike(self, request, pk=None):
-        post = get_object_or_404(ConcourPost, pk=pk)
+    def dislike(self, request, concourse_id=None, pk=None):
+        post = get_object_or_404(ConcourPost, pk=pk, concourse_id=concourse_id)
         post.downvotes += 1
         post.save()
         return Response({'status': 'Post disliked'}, status=status.HTTP_200_OK)
-
-    def retrieve(self, request, pk=None):
-        post = get_object_or_404(ConcourPost, pk=pk)
-        post.views += 1
-        post.save()
-        serializer = self.serializer_class(post)
-        return Response(serializer.data)
 
 
 class ConcourCommentViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class = ConcourCommentSerializer
 
-    def list(self, request, post_id=None):
-        post = get_object_or_404(ConcourPost, id=post_id)
+    def list(self, request, concourse_id=None, post_id=None):
+        post = get_object_or_404(ConcourPost, id=post_id, concourse_id=concourse_id)
         comments = post.comments.all().order_by("-date_created")
         serializer = self.serializer_class(comments, many=True)
         return Response(serializer.data)
 
-    def create(self, request, post_id=None):
-        post = get_object_or_404(ConcourPost, id=post_id)
+    def create(self, request, concourse_id=None, post_id=None):
+        post = get_object_or_404(ConcourPost, id=post_id, concourse_id=concourse_id)
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
             serializer.save(post=post, author=request.user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def update(self, request, post_id=None, pk=None):
-        comment = get_object_or_404(ConcourComment, id=pk, post_id=post_id)
+    def update(self, request, concourse_id=None, post_id=None, pk=None):
+        comment = get_object_or_404(ConcourComment, id=pk, post_id=post_id, post__concourse_id=concourse_id)
+        self.check_object_permissions(request, comment)
         serializer = self.serializer_class(comment, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def destroy(self, request, post_id=None, pk=None):
-        comment = get_object_or_404(ConcourComment, id=pk, post_id=post_id)
+    def destroy(self, request, concourse_id=None, post_id=None, pk=None):
+        comment = get_object_or_404(ConcourComment, id=pk, post_id=post_id, post__concourse_id=concourse_id)
+        self.check_object_permissions(request, comment)
         comment.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
-    def like(self, request, post_id=None, pk=None):
-        comment = get_object_or_404(ConcourComment, id=pk, post_id=post_id)
+    def like(self, request, concourse_id=None, post_id=None, pk=None):
+        comment = get_object_or_404(ConcourComment, id=pk, post_id=post_id, post__concourse_id=concourse_id)
         comment.upvotes += 1
         comment.save()
         return Response({'status': 'Comment liked'}, status=status.HTTP_200_OK)
