@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import PostViewSet, CommentViewSet, CategoryViewSet
+from .views import PostViewSet, CommentViewSet, CategoryViewSet, ConcourPostViewSet, ConcourCommentViewSet
 
 router = DefaultRouter()
 router.register(r'post_questions', PostViewSet, basename = 'post')
@@ -14,8 +14,25 @@ post_comments = CommentViewSet.as_view({
     'put': 'update',
 })
 
+concour_posts = ConcourPostViewSet.as_view({
+    'get': 'list',
+    'post': 'create',
+})
+
+concour_comments = ConcourCommentViewSet.as_view({
+    'get': 'list',
+    'post': 'create',
+    'put': 'update',
+    'delete': 'destroy',
+})
+
 urlpatterns = [
     path('', include(router.urls)),
     path('post/<int:post_id>/comments/', post_comments, name='post-comments'),
     path('post/<int:post_id>/comments/<int:pk>/', post_comments, name='comment-detail'),
+    path('concourse/<int:concourse_id>/posts/', concour_posts, name='concour-posts'),
+    path('concourse/<int:concourse_id>/posts/<int:post_id>/comments/', concour_comments, name='concour-comments'),
+    path('concourse/<int:concourse_id>/posts/<int:post_id>/comments/<int:pk>/', concour_comments, name='concour-comment-detail'),
+    path('concourse/<int:concourse_id>/posts/<int:pk>/like/', ConcourPostViewSet.as_view({'post': 'like'}), name='concour-post-like'),
+    path('concourse/<int:concourse_id>/posts/<int:pk>/dislike/', ConcourPostViewSet.as_view({'post': 'dislike'}), name='concour-post-dislike'),
 ]

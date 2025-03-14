@@ -1,4 +1,5 @@
 from rest_framework import permissions
+from concourse.models import ConcourseRegistration
 
     
 class PostUserOrNot(permissions.BasePermission):
@@ -21,3 +22,8 @@ class IsAdminOrReadOnly(permissions.BasePermission):
         if request.method in permissions.SAFE_METHODS:
             return True
         return request.user and request.user.is_staff
+
+class IsEnrolledInConcourse(permissions.BasePermission):
+    def has_permission(self, request, view):
+        concourse_id = view.kwargs.get('concourse_id')
+        return ConcourseRegistration.objects.filter(user=request.user, concourse_id=concourse_id).exists()

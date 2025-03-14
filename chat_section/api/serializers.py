@@ -1,6 +1,5 @@
 from rest_framework import serializers
-from chat_section.models import Post, Comment, Category
-
+from chat_section.models import Post, Comment, Category, ConcourPost, ConcourComment
 
   
 class CommentSerializer(serializers.ModelSerializer):
@@ -57,4 +56,18 @@ class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
         fields = ["name", "posts"]
-        
+
+class ConcourPostSerializer(serializers.ModelSerializer):
+    post_user = serializers.StringRelatedField(source='post_user.username', read_only=True)
+    concourse = serializers.StringRelatedField(source='concourse.concourseName', read_only=True)
+
+    class Meta:
+        model = ConcourPost
+        fields = ["id", "title", "content", "image_post", "upvotes", "downvotes", "views", "date_created", "post_user", "concourse"]
+
+class ConcourCommentSerializer(serializers.ModelSerializer):
+    author = serializers.StringRelatedField(source='author.username', read_only=True)
+
+    class Meta:
+        model = ConcourComment
+        fields = ["id", "content", "image_comment", "upvotes", "downvotes", "author", "date_created"]
