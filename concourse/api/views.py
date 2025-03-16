@@ -17,6 +17,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.exceptions import PermissionDenied
 from rest_framework import generics, permissions
 from rest_framework.filters import SearchFilter
+from rest_framework.views import APIView
 
 
 
@@ -347,3 +348,10 @@ class ConcourseResourceListView(generics.ListAPIView):
         concourse_id = self.kwargs['concourse_id']
         registered_concourses = ConcourseRegistration.objects.filter(user=user).values_list('concourse_id', flat=True)
         return ConcourseResource.objects.filter(concourse_id=concourse_id, concourse_id__in=registered_concourses)
+    
+
+class ConcourseListView(APIView):
+    def get(self, request):
+        concourses = Concourse.objects.all()
+        serializer = ConcourseSerializer(concourses, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)

@@ -17,6 +17,10 @@ from django_filters.rest_framework import DjangoFilterBackend
 from concourse.models import ConcourseRegistration
 from chat_section.models import ConcourPost, ConcourComment
 from .serializers import ConcourPostSerializer
+from rest_framework.generics import ListAPIView
+from concourse.models import Concourse
+from rest_framework.permissions import AllowAny
+from rest_framework.serializers import ModelSerializer
 
 # from drf_spectacular.utils import extend_schema, OpenApiResponse
 
@@ -294,5 +298,12 @@ class ConcourCommentViewSet(viewsets.ViewSet):
         comment.upvotes += 1
         comment.save()
         return Response({'status': 'Comment liked'}, status=status.HTTP_200_OK)
+
+from concourse.api.serializers import ConcourseSerializer
+
+class ConcourseListView(ListAPIView):
+    queryset = Concourse.objects.all()
+    serializer_class = ConcourseSerializer
+    permission_classes = [AllowAny]
 
 
