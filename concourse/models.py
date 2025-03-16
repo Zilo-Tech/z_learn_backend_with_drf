@@ -96,6 +96,16 @@ class ConcoursePastPapers(models.Model):
         return f"{self.subject} - {self.year}"
 
 
+class ConcourseSolutionGuide(models.Model):
+    concourse = models.ForeignKey(Concourse, on_delete=models.CASCADE, related_name='solution_guides')
+    subject = models.CharField(max_length=255)
+    file = models.FileField(upload_to='concourse/solution_guides/')
+    created_at = models.DateTimeField(auto_now_add=True)
+    year = models.IntegerField()
+
+    def __str__(self):
+        return f"{self.subject} - {self.year}"
+
 
 # Other models i could include are..
 class ConcourseResource(models.Model):
