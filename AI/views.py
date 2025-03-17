@@ -8,9 +8,11 @@ import requests
 from django.contrib.auth.models import User
 
 class ChatListCreateView(generics.ListCreateAPIView):
-    queryset = Chat.objects.all()
     serializer_class = ChatSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Chat.objects.filter(user=self.request.user)
 
     def perform_create(self, serializer):
         query = self.request.data.get('query')
