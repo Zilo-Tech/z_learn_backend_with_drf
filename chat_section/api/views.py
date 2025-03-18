@@ -21,6 +21,9 @@ from rest_framework.generics import ListAPIView
 from concourse.models import Concourse
 from rest_framework.permissions import AllowAny
 from rest_framework.serializers import ModelSerializer
+from google import genai
+from google.genai import types
+from django.conf import settings
 
 # from drf_spectacular.utils import extend_schema, OpenApiResponse
 
@@ -202,6 +205,57 @@ class CommentViewSet(viewsets.ViewSet):
         return Response({'status': 'Comment liked'}, status=status.HTTP_200_OK)
 
 
+# Function to generate a Z-Bot comment
+def generate_zbot_comment(post):
+    client = genai.Client(api_key=settings.GEMINI_API_KEY)
+    model = "gemini-2.0-flash"
+
+    # Instructions for Z-Bot
+    instructions = (
+        "You are Z-Bot, an AI assistant created by ZiloTech. "
+        "Your role is to provide helpful, concise, and insightful comments on user posts. "
+        "Analyze the content of the post and provide a meaningful response that adds value to the discussion. "
+        "Always maintain a professional and friendly tone."
+    )
+
+    # Build the prompt
+    prompt = f"{instructions}\n\nPost Content:\n{post.content}"
+
+    # Generate the AI response
+    contents = [
+        types.Content(
+            role="user",
+            parts=[types.Part.from_text(text=prompt)],
+        )
+    ]
+    generate_content_config = types.GenerateContentConfig(
+        temperature=1,
+        top_p=0.95,
+        top_k=40,
+        max_output_tokens=250,
+        response_mime_type="text/plain",
+    )
+
+    try:
+        response_text = ""
+        for chunk in client.models.generate_content_stream(
+            model=model,
+            contents=contents,
+            config=generate_content_config,
+        ):
+            response_text += chunk.text
+
+        # Create a comment as Z-Bot
+        z_bot_user, created = User.objects.get_or_create(username="Z-Bot", defaults={"is_active": False})
+        ConcourComment.objects.create(
+            post=post,
+            author=z_bot_user,
+            content=response_text,
+        )
+    except Exception as e:
+        print(f"Error generating Z-Bot comment: {str(e)}")
+
+# Update the ConcourPostViewSet to call the Z-Bot comment function
 class ConcourPostViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class = ConcourPostSerializer
@@ -218,7 +272,11 @@ class ConcourPostViewSet(viewsets.ViewSet):
             return Response({"error": "You are not enrolled in this concourse."}, status=status.HTTP_403_FORBIDDEN)
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
-            serializer.save(post_user=request.user, concourse_id=concourse_id)
+            post = serializer.save(post_user=request.user, concourse_id=concourse_id)
+            
+            # Call the function to generate a Z-Bot comment
+            generate_zbot_comment(post)
+            
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
