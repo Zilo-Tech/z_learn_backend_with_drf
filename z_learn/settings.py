@@ -196,6 +196,8 @@ CORS_ALLOW_ALL_ORIGINS = True
 #     'PAGE_SIZE': 2
 # }
 
+GEMINI_API_KEY = config('GEMINI_API_KEY') 
+
 # AWS S3 settings
 
 # AWS S3 settings from .env
