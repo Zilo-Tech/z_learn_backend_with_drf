@@ -49,11 +49,13 @@ class UserSerializer(serializers.ModelSerializer):
         
         user = User(
             email=email,
-            username=username,
-            whatsapp_number=whatsapp_number  # This will be empty if not provided
+            username=username
         ) 
         user.set_password(password)
         user.save()
+
+        # Pass whatsapp_number to the signal
+        user._whatsapp_number = whatsapp_number  # Temporary attribute for signal
         return user
     
     
