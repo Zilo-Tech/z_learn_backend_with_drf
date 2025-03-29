@@ -26,7 +26,7 @@ def save_whatsapp_number(sender, instance, created, **kwargs):
 
 class CustomUser(AbstractUser):
     email = models.EmailField(unique=True)
-    whatsapp_number = models.CharField(max_length=15, blank=True, null=True)
+    whatsapp_number = models.CharField(max_length=15, blank=False, null=False)  # Ensure this is optional
 
     class Meta:
         permissions = (
