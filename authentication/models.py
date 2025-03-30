@@ -10,7 +10,7 @@ from django.contrib.auth.models import AbstractUser, Group, Permission
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)
 def create_auth_token(sender, instance=None, created=False, **kwargs):
     if created:
-        Token.objects.create(user=instance)
+        Token.objects.get_or_create(user=instance)  # Check if a token already exists before creating
 
 
 class CustomUser(AbstractUser):
