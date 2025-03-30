@@ -1,5 +1,5 @@
+from django.conf import settings
 from django.db import models
-from django.contrib.auth.models import User
 from concourse.models import Concourse
 
 # Create your models here.
@@ -14,7 +14,7 @@ class Post(models.Model):
     title = models.CharField(max_length=255)
     content = models.TextField()
     date_created = models.DateTimeField(auto_now_add=True)
-    post_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="posts")
+    post_user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="posts")
     image_post = models.ImageField(upload_to='chat_section/post', blank=True, null=True)
     upvotes = models.IntegerField(default=0)
     downvotes = models.IntegerField(default=0)
@@ -43,7 +43,7 @@ class Post(models.Model):
     
 class Comment(models.Model):
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="comments")
-    author = models.ForeignKey(User, on_delete=models.CASCADE)
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     content = models.TextField()
     date_created = models.DateTimeField(auto_now_add=True)
     image_comment = models.ImageField(upload_to='chat_section/comment', blank=True, null=True) 
@@ -67,7 +67,7 @@ class ConcourPost(models.Model):
     title = models.CharField(max_length=255)
     content = models.TextField()
     date_created = models.DateTimeField(auto_now_add=True)
-    post_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="concour_posts")
+    post_user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="concour_posts")
     concourse = models.ForeignKey(Concourse, on_delete=models.CASCADE, related_name="concour_posts")
     image_post = models.ImageField(upload_to='chat_section/concour_post', blank=True, null=True)
     upvotes = models.IntegerField(default=0)
@@ -79,7 +79,7 @@ class ConcourPost(models.Model):
 
 class ConcourComment(models.Model):
     post = models.ForeignKey(ConcourPost, on_delete=models.CASCADE, related_name="comments")
-    author = models.ForeignKey(User, on_delete=models.CASCADE)
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     content = models.TextField()
     date_created = models.DateTimeField(auto_now_add=True)
     image_comment = models.ImageField(upload_to='chat_section/concour_comment', blank=True, null=True)

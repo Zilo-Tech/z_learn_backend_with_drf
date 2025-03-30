@@ -100,6 +100,8 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'z_learn.wsgi.application'
 
+AUTH_USER_MODEL = 'authentication.CustomUser'
+
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases

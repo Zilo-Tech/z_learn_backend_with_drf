@@ -1,5 +1,5 @@
+from django.conf import settings
 from django.db import models
-from django.contrib.auth.models import User
 from datetime import date
 from django.core.validators import RegexValidator
 
@@ -21,7 +21,7 @@ class Concourse(models.Model):
     price = models.IntegerField()
     description = models.TextField()
     created_date = models.DateTimeField(auto_now_add=True)
-    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
     is_active = models.BooleanField(default=True)
     exam_date = models.DateField(blank=True, null=True)
     application_deadline = models.DateField(blank=True, null=True)
@@ -60,7 +60,7 @@ class LatestNews(models.Model):
     
     
 class ConcourseRegistration(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="concourseUser")
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="concourseUser")
     concourse = models.ForeignKey(Concourse, on_delete=models.CASCADE, related_name="concourse")
     application_date = models.DateTimeField(auto_now_add=True)
     payment_status = models.BooleanField(default=False)
