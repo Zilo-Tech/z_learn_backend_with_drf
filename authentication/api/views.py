@@ -18,8 +18,9 @@ from .serializers import RequestOTPSerializer, VerifyOTPSerializer
 
 
 class RegisterUser(viewsets.ViewSet):
-    """This class will allow user to Register a user """
-    permission_classes([IsAuthenticated]) 
+    """This class will allow user to Register a user"""
+    # Removed IsAuthenticated permission - users shouldn't need to be logged in to register
+    
     @swagger_auto_schema(
         operation_description="Register a new user",
         request_body=UserSerializer,
@@ -29,8 +30,8 @@ class RegisterUser(viewsets.ViewSet):
         },
     )
     def create(self, request, format=None):
-        """ Register or creation of account."""
-        serializer = UserSerializer(data = request.data)
+        """Register or creation of account."""
+        serializer = UserSerializer(data=request.data)
         data = {}
         
         if serializer.is_valid():
@@ -39,28 +40,26 @@ class RegisterUser(viewsets.ViewSet):
             data['username'] = account.username
             data['email'] = account.email
             data['whatsapp_number'] = account.whatsapp_number
-             
-            token = Token.objects.get(user = account).key
-            data['token'] = token
+            
+            # Token is already created by serializer, just fetch it
+            token = Token.objects.get(user=account)
+            data['token'] = token.key
+            return Response(data, status=status.HTTP_201_CREATED)
         else:
-            data = serializer.errors
-        return Response(data)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
     @swagger_auto_schema(
-        operation_description="Logout the user by deleting thier token",
+        operation_description="Logout the user by deleting their token",
         responses={
             status.HTTP_204_NO_CONTENT: "Token deleted successfully",
             status.HTTP_403_FORBIDDEN: "User is not authenticated"
         }
     )
-    @action(detail=False, methods=['post'])
+    @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
     def delete_token(self, request):
         """Logout a user by deleting his/her token."""
-        if request.user.is_authenticated:
-            request.user.auth_token.delete()
-            return Response({'detail': 'Token deleted successfully.'}, status=status.HTTP_204_NO_CONTENT)
-        return Response({'detail': 'User is not authenticated.'}, status=status.HTTP_403_FORBIDDEN)
-    
+        request.user.auth_token.delete()
+        return Response({'detail': 'Token deleted successfully.'}, status=status.HTTP_204_NO_CONTENT)
     
     @swagger_auto_schema(
         operation_description="Change user password",
@@ -73,9 +72,32 @@ class RegisterUser(viewsets.ViewSet):
     def change_password(self, request):
         serializer = PasswordChangedSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
-            user = serializer.save()
-            return Response({'detail': 'Password changed successfully'}, status = status.HTTP_200_OK)
-        return Response(serializer.errors, status = status.HTTP_400_BAD_REQUEST)
+            serializer.save()
+            return Response({'detail': 'Password changed successfully'}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class CustomAuthToken(ObtainAuthToken):
+    """This class will allow user to login"""
+    
+    @swagger_auto_schema(
+        operation_description="Login a user",
+        request_body=ObtainAuthToken.serializer_class,
+        responses={
+            status.HTTP_200_OK: "Login Successful",
+            status.HTTP_400_BAD_REQUEST: "Bad Request."
+        },
+    )
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data['user']
+        token, created = Token.objects.get_or_create(user=user)
+        response_data = {
+            'token': token.key,
+            'email': user.email,
+            'username': user.username,
+        }
+        return Response(response_data, status=status.HTTP_200_OK)
     
     
     

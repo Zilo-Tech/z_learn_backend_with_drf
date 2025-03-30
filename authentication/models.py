@@ -5,22 +5,26 @@ from rest_framework.authtoken.models import Token
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.contrib.auth.models import AbstractUser, Group, Permission
+from django.db import transaction
 
 
-@receiver(post_save, sender=settings.AUTH_USER_MODEL)
-def create_auth_token(sender, instance=None, created=False, **kwargs):
-    if created:
-        Token.objects.get_or_create(user=instance)  # Check if a token already exists before creating
+# @receiver(post_save, sender=settings.AUTH_USER_MODEL)
+# def create_auth_token(sender, instance=None, created=False, **kwargs):
+#     if created:
+#         def create_token():
+#             if instance.pk:  # Double check user exists
+#                 Token.objects.get_or_create(user=instance)
+#         transaction.on_commit(create_token)
+
+# # Ensure Token references the custom user model
+# Token._meta.get_field('user').remote_field.model = settings.AUTH_USER_MODEL
 
 
 class CustomUser(AbstractUser):
     email = models.EmailField(unique=True)
-    whatsapp_number = models.CharField(max_length=15, blank=True, null=True)  # Make optional
+    whatsapp_number = models.CharField(max_length=15, blank=True, null=True)
 
     class Meta:
-        permissions = (
-            # Define any custom permissions if needed
-        )
         verbose_name = 'user'
         verbose_name_plural = 'users'
     

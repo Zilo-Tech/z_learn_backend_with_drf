@@ -2,6 +2,7 @@ from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.password_validation import validate_password
+from rest_framework.authtoken.models import Token
 
 CustomUser = get_user_model()
 
@@ -12,12 +13,10 @@ class UserSerializer(serializers.ModelSerializer):
     )
 
     class Meta:
-        model = CustomUser  # Use the custom user model
+        model = CustomUser
         fields = ['username', 'password', 'email', 'password2', 'whatsapp_number']
         extra_kwargs = {
-            'password': {
-                'write_only': True
-            },
+            'password': {'write_only': True},
             'email': {
                 'required': True,
                 'allow_blank': False
@@ -41,10 +40,13 @@ class UserSerializer(serializers.ModelSerializer):
         user = CustomUser(
             email=self.validated_data['email'],
             username=self.validated_data['username'],
-            whatsapp_number=self.validated_data.get('whatsapp_number', '')  # Optional field
+            whatsapp_number=self.validated_data.get('whatsapp_number', '')
         )
         user.set_password(password)
         user.save()
+        
+        # Safely create token (handle case where token might already exist)
+        token, created = Token.objects.get_or_create(user=user)
         return user
     
     
