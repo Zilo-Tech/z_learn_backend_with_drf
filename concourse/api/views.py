@@ -1,8 +1,8 @@
 from .serializers import (LatestNewsSerializer, ConcourseDepartmentSerializer,
-                          ConcourseSerializer, ConcourseRegistrationSerializer, ConcourseTypeFieldSerializer, ConcoursePastPapersSerializer,ConcourseResourceSerializer)
+                          ConcourseSerializer, ConcourseRegistrationSerializer, ConcourseTypeFieldSerializer, ConcoursePastPapersSerializer,ConcourseResourceSerializer,ConcourseSolutionGuideSerializer)
 
 from concourse.models import (Concourse, ConcourseDepartment, LatestNews,ConcourseResource,
-                              ConcourseRegistration, ConcourseTypeField, ConcoursePastPapers)
+                              ConcourseRegistration, ConcourseTypeField, ConcoursePastPapers,ConcourseSolutionGuide)
 
 from django.shortcuts import get_object_or_404
 from rest_framework import viewsets
@@ -17,6 +17,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.exceptions import PermissionDenied
 from rest_framework import generics, permissions
 from rest_framework.filters import SearchFilter
+from rest_framework.views import APIView
 
 
 
@@ -347,3 +348,67 @@ class ConcourseResourceListView(generics.ListAPIView):
         concourse_id = self.kwargs['concourse_id']
         registered_concourses = ConcourseRegistration.objects.filter(user=user).values_list('concourse_id', flat=True)
         return ConcourseResource.objects.filter(concourse_id=concourse_id, concourse_id__in=registered_concourses)
+    
+
+class ConcourseSolutionGuideViewSet(viewsets.ModelViewSet):
+    serializer_class = ConcourseSolutionGuideSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        concourse_id = self.kwargs['concourse_id']
+        
+        # Check if the user has paid for the concourse
+        registration = ConcourseRegistration.objects.filter(user=user, concourse_id=concourse_id, payment_status=True).first()
+        if not registration:
+            raise PermissionDenied("You have not paid for this concourse.")
+        
+        # Return solution guides for the concourse
+        return ConcourseSolutionGuide.objects.filter(concourse_id=concourse_id)
+
+    def perform_create(self, serializer):
+        concourse_id = self.kwargs['concourse_id']
+        concourse = get_object_or_404(Concourse, id=concourse_id)
+        serializer.save(concourse=concourse)
+
+
+class ConcourseSolutionGuideListView(generics.ListAPIView):
+    serializer_class = ConcourseSolutionGuideSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        concourse_id = self.kwargs['concourse_id']
+        
+        # Check if the user has paid for the concourse
+        registration = ConcourseRegistration.objects.filter(user=user, concourse_id=concourse_id, payment_status=True).first()
+        if not registration:
+            raise PermissionDenied("You have not paid for this concourse.")
+        
+        # Return solution guides for the concourse
+        return ConcourseSolutionGuide.objects.filter(concourse_id=concourse_id)
+
+
+class ConcourseSolutionGuideDetailView(generics.RetrieveAPIView):
+    serializer_class = ConcourseSolutionGuideSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self):
+        user = self.request.user
+        concourse_id = self.kwargs['concourse_id']
+        guide_id = self.kwargs['guide_id']
+        
+        # Check if the user has paid for the concourse
+        registration = ConcourseRegistration.objects.filter(user=user, concourse_id=concourse_id, payment_status=True).first()
+        if not registration:
+            raise PermissionDenied("You have not paid for this concourse.")
+        
+        # Return the specific solution guide for the concourse
+        return ConcourseSolutionGuide.objects.get(id=guide_id, concourse_id=concourse_id)
+
+
+class ConcourseListView(APIView):
+    def get(self, request):
+        concourses = Concourse.objects.all()
+        serializer = ConcourseSerializer(concourses, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)

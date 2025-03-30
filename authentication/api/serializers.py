@@ -35,7 +35,7 @@ class UserSerializer(serializers.ModelSerializer):
         password2 = self.validated_data.pop('password2')
         email = self.validated_data['email']
         username = self.validated_data['username']
-        whatsapp_number = self.validated_data['whatsapp_number']
+        whatsapp_number = self.validated_data.get('whatsapp_number', '')  # Use .get() to handle missing field
         
         if password != password2:
             raise serializers.ValidationError({
@@ -49,11 +49,13 @@ class UserSerializer(serializers.ModelSerializer):
         
         user = User(
             email=email,
-            username=username,
-            whatsapp_number=whatsapp_number
+            username=username
         ) 
         user.set_password(password)
         user.save()
+
+        # Pass whatsapp_number to the signal
+        user._whatsapp_number = whatsapp_number  # Temporary attribute for signal
         return user
     
     

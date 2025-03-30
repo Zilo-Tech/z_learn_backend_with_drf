@@ -1,7 +1,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import (LatestNewsViewSet, ConcourseViewSet, LatestNewsViewSet, 
-                    ConcourseDepartmentViewSet,ConcourseResourceListView, ConcourseTypeFieldViewSet, ConcourseRegistrationViewSet, ConcoursePastPapersView,ConcoursePastPaperDetailView)
+                    ConcourseDepartmentViewSet,ConcourseResourceListView, ConcourseTypeFieldViewSet, ConcourseRegistrationViewSet, ConcoursePastPapersView,ConcoursePastPaperDetailView, ConcourseSolutionGuideListView, ConcourseSolutionGuideDetailView, ConcourseSolutionGuideViewSet)
 
 router = DefaultRouter()
 # router.register(r'latest_news', LatestNewsViewSet, basename='latest_news')
@@ -9,7 +9,7 @@ router.register(r'concourse', ConcourseViewSet, basename='concourse')
 router.register(r'concourse_department', ConcourseDepartmentViewSet, basename='concourse_department')
 router.register(r'concourse_type_field', ConcourseTypeFieldViewSet, basename='concourse_type')
 # router.register(r'concourse_registration', ConcourseRegistrationViewSet, basename='concourse_registration')
-
+router.register(r'concourse/(?P<concourse_id>\d+)/solution-guides', ConcourseSolutionGuideViewSet, basename='concourse-solution-guides')
 
 
 latest_news_list = LatestNewsViewSet.as_view({
@@ -77,4 +77,6 @@ urlpatterns = [
 
     path('<int:concourse_id>/resources/', ConcourseResourceListView.as_view(), name='concourse-resource-list'),
 
+    path('<int:concourse_id>/solution-guides/', ConcourseSolutionGuideListView.as_view(), name='concourse-solution-guides'),
+    path('<int:concourse_id>/solution-guides/<int:guide_id>/', ConcourseSolutionGuideDetailView.as_view(), name='concourse-solution-guide-detail'),
 ]

@@ -1,6 +1,8 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import PostViewSet, CommentViewSet, CategoryViewSet, ConcourPostViewSet, ConcourCommentViewSet
+from concourse.models import Concourse  # Import the Concourse model
+from .views import ConcourseListView  # Import the new view
 
 router = DefaultRouter()
 router.register(r'post_questions', PostViewSet, basename = 'post')
@@ -38,4 +40,5 @@ urlpatterns = [
     path('concourse/<int:concourse_id>/posts/<int:post_id>/comments/<int:pk>/like/', ConcourCommentViewSet.as_view({'post': 'like'}), name='concour-comment-like'),
     path('post_questions/<int:pk>/dislike/', PostViewSet.as_view({'post': 'dislike'}), name='post-dislike'),
     path('post/<int:post_id>/comments/<int:pk>/like/', CommentViewSet.as_view({'post': 'like'}), name='comment-like'),
+    path('groups/', ConcourseListView.as_view(), name='groups'), 
 ]

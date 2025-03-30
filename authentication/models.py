@@ -11,15 +11,22 @@ from django.contrib.auth.models import AbstractUser, Group, Permission
 def create_auth_token(sender, instance=None, created=False, **kwargs):
     if created:
         Token.objects.create(user=instance)
-        
-        
-        
-        
+
+
+@receiver(post_save, sender=settings.AUTH_USER_MODEL)
+def save_whatsapp_number(sender, instance, created, **kwargs):
+    """Save whatsapp_number to CustomUser after User is created or updated."""
+    whatsapp_number = getattr(instance, '_whatsapp_number', None)  # Retrieve temporary attribute
+    if whatsapp_number:
+        CustomUser.objects.update_or_create(
+            user=instance,  # Link to the User instance
+            defaults={'whatsapp_number': whatsapp_number}
+        )
 
 
 class CustomUser(AbstractUser):
     email = models.EmailField(unique=True)
-    whatsapp_number = models.CharField(max_length=15, blank=True, null=True)
+    whatsapp_number = models.CharField(max_length=15, blank=False, null=False)  # Ensure this is optional
 
     class Meta:
         permissions = (
