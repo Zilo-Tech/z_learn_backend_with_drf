@@ -1,61 +1,50 @@
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.password_validation import validate_password
 
+CustomUser = get_user_model()
 
 class UserSerializer(serializers.ModelSerializer):
     password2 = serializers.CharField(
         style={'input_type': 'password'},
         write_only=True
     )
-    whatsapp_number = serializers.CharField(required=False, allow_blank=True)
 
     class Meta:
-        model = User 
+        model = CustomUser  # Use the custom user model
         fields = ['username', 'password', 'email', 'password2', 'whatsapp_number']
         extra_kwargs = {
             'password': {
                 'write_only': True
-                },
-            
+            },
             'email': {
                 'required': True,
                 'allow_blank': False
-                }
             }
-        
+        }
+
     def validate_email(self, value):
-        if User.objects.filter(email=value).exists():
+        if CustomUser.objects.filter(email=value).exists():
             raise serializers.ValidationError(_('This email is already registered.'))
         return value
-    
+
     def save(self):
         password = self.validated_data['password']
         password2 = self.validated_data.pop('password2')
-        email = self.validated_data['email']
-        username = self.validated_data['username']
-        whatsapp_number = self.validated_data.get('whatsapp_number', '')  # Use .get() to handle missing field
-        
+
         if password != password2:
             raise serializers.ValidationError({
                 'error': 'The 2 passwords should match'
             })
-            
-        if User.objects.filter(email=email).exists():
-            raise serializers.ValidationError({
-                'error': 'This email has been taken'
-            })
-        
-        user = User(
-            email=email,
-            username=username
-        ) 
+
+        user = CustomUser(
+            email=self.validated_data['email'],
+            username=self.validated_data['username'],
+            whatsapp_number=self.validated_data.get('whatsapp_number', '')  # Optional field
+        )
         user.set_password(password)
         user.save()
-
-        # Pass whatsapp_number to the signal
-        user._whatsapp_number = whatsapp_number  # Temporary attribute for signal
         return user
     
     
@@ -91,14 +80,14 @@ class RequestOTPSerializer(serializers.Serializer):
 
     def validate_email(self, value):
         """Check if email exists in the system."""
-        if not User.objects.filter(email=value).exists():
+        if not CustomUser.objects.filter(email=value).exists():
             raise serializers.ValidationError(_("No user found with this email address."))
         return value
 
     def save(self):
         """Generate OTP and send via email/SMS."""
         email = self.validated_data["email"]
-        user = User.objects.get(email=email)
+        user = CustomUser.objects.get(email=email)
 
         # Generate a random 6-digit OTP
         otp = "".join(random.choices("0123456789", k=6))
@@ -131,8 +120,8 @@ class VerifyOTPSerializer(serializers.Serializer):
 
         # Find user
         try:
-            user = User.objects.get(email=email)
-        except User.DoesNotExist:
+            user = CustomUser.objects.get(email=email)
+        except CustomUser.DoesNotExist:
             raise serializers.ValidationError(_("User not found."))
 
         # Check OTP
@@ -157,7 +146,7 @@ class VerifyOTPSerializer(serializers.Serializer):
         new_password = self.validated_data["new_password"]
 
         # Find user
-        user = User.objects.get(email=email)
+        user = CustomUser.objects.get(email=email)
         user.set_password(new_password)
         user.save()
 
