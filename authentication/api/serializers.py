@@ -3,59 +3,61 @@ from rest_framework import serializers
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.password_validation import validate_password
 
+from django.contrib.auth import get_user_model
+from django.utils.translation import gettext_lazy as _
+
+User = get_user_model()
+User = get_user_model()
 
 class UserSerializer(serializers.ModelSerializer):
     password2 = serializers.CharField(
         style={'input_type': 'password'},
         write_only=True
     )
-    whatsapp_number = serializers.CharField(required=False, allow_blank=True)
+    # Make whatsapp_number required by default
+    whatsapp_number = serializers.CharField(required=True)
 
     class Meta:
         model = User 
-        fields = ['username', 'password', 'email', 'password2', 'whatsapp_number']
+        # Remove 'email' from the fields list if you don't want it on signup.
+        fields = ['username', 'password', 'password2', 'whatsapp_number']
         extra_kwargs = {
             'password': {
                 'write_only': True
-                },
-            
-            'email': {
-                'required': True,
-                'allow_blank': False
-                }
             }
+        }
         
-    def validate_email(self, value):
-        if User.objects.filter(email=value).exists():
-            raise serializers.ValidationError(_('This email is already registered.'))
-        return value
+    def validate(self, data):
+        # Ensure both passwords match.
+        if data['password'] != data['password2']:
+            raise serializers.ValidationError({
+                'error': _('The 2 passwords should match')
+            })
+        # Optionally, add any custom validation for whatsapp_number if needed.
+        return data
     
     def save(self):
         password = self.validated_data['password']
-        password2 = self.validated_data.pop('password2')
-        email = self.validated_data['email']
+        # Remove password2 as it's no longer needed after validation.
+        self.validated_data.pop('password2')
         username = self.validated_data['username']
         whatsapp_number = self.validated_data['whatsapp_number']
         
-        if password != password2:
+        # Optionally, you can check for duplicate whatsapp_number
+        if User.objects.filter(whatsapp_number=whatsapp_number).exists():
             raise serializers.ValidationError({
-                'error': 'The 2 passwords should match'
-            })
-            
-        if User.objects.filter(email=email).exists():
-            raise serializers.ValidationError({
-                'error': 'This email has been taken'
+                'error': _('This WhatsApp number has been taken')
             })
         
+        # Create the user without email
         user = User(
-            email=email,
             username=username,
             whatsapp_number=whatsapp_number
         ) 
         user.set_password(password)
         user.save()
         return user
-    
+
     
 class PasswordChangedSerializer(serializers.Serializer):
     old_password = serializers.CharField(required=True, write_only=True)

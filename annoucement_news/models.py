@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
-
+from django.conf import settings
 
 
 # Create your models here.
@@ -10,7 +10,7 @@ class Notification(models.Model):
     date_created = models.DateTimeField(auto_now_add=True)
     attachment = models.FileField(upload_to='annoucement_news/notification/', null=True, blank=True)
     status = models.CharField(max_length=50, choices=[('active', 'Active'), ('inactive', 'Inactive')])
-    author = models.ForeignKey(User, on_delete=models.CASCADE)
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     expiration_date = models.DateTimeField(null=True, blank=True)
 
 
@@ -19,7 +19,7 @@ class Notification(models.Model):
     
     
 class NotificationReadStatus(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     notification = models.ForeignKey(Notification, on_delete=models.CASCADE)
     is_read = models.BooleanField(default=False)
     
