@@ -5,7 +5,7 @@ from rest_framework import status
 from .models import Chat
 from .serializers import ChatSerializer
 import requests
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 import openai
 from .models import ChatGPTInteraction
 from .serializers import ChatGPTInteractionSerializer
@@ -18,6 +18,8 @@ api_key =""
 client = OpenAI(api_key=api_key)
 
 
+
+User = get_user_model() 
 class ChatListCreateView(generics.ListCreateAPIView):
     serializer_class = ChatSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -29,7 +31,7 @@ class ChatListCreateView(generics.ListCreateAPIView):
         query = self.request.data.get('query')
         response = self.get_chatbot_response(query)
         user = User.objects.get(id=self.request.user.id)
-        serializer.save(user=user, response=response)
+        serializer.save(user=self.request.user, response=response)
 
     def get_chatbot_response(self, query):
         url = "https://z-bot-u77n.onrender.com/chat"
@@ -58,7 +60,7 @@ class ChatGPTInteractionView(generics.ListCreateAPIView):
         query = self.request.data.get('query')
         response = self.get_gemini_response(query)
         user = User.objects.get(id=self.request.user.id)
-        serializer.save(user=user, response=response)
+        serializer.save(user=self.request.user, response=response)
 
     def get_gemini_response(self, query):
         client = genai.Client(api_key=settings.GEMINI_API_KEY)
