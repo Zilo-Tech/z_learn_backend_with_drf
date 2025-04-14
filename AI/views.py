@@ -81,7 +81,7 @@ class ChatGPTInteractionView(generics.ListCreateAPIView):
             "Always maintain a professional, friendly, and encouraging tone to motivate students in their learning journey."
         )
 
-        # Fetch the conversation history for the current user
+        # Fetch the conversation history for the current  user
         user = self.request.user
         previous_interactions = ChatGPTInteraction.objects.filter(user=user).order_by('timestamp')
 
