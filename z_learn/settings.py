@@ -178,6 +178,10 @@ REST_FRAMEWORK = {
     'DEFAULT_FILTER_BACKENDS': (
         'django_filters.rest_framework.DjangoFilterBackend',
     ),
+    
+    'DEFAULT_THROTTLE_RATES': {
+        'chat_user': '25/day',  # Allow 25 requests per day for authenticated users in the ChatListCreateView
+    }
 
 }
 
