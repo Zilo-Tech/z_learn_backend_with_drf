@@ -15,7 +15,7 @@ import os
 from google import genai
 from google.genai import types
 from django.conf import settings
-from .throttling import ChatUserRateThrottle
+from .throttling import ChatUserRateThrottle, ChatUserGPTRateThrottle
 api_key =""
 client = OpenAI(api_key=api_key)
 
@@ -50,12 +50,15 @@ class UserChatListView(generics.ListAPIView):
     serializer_class = ChatSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+
     def get_queryset(self):
         return Chat.objects.filter(user=self.request.user)
 
 class ChatGPTInteractionView(generics.ListCreateAPIView):
     serializer_class = ChatGPTInteractionSerializer
     permission_classes = [permissions.IsAuthenticated]
+    throttle_classes = [ChatUserGPTRateThrottle]
+
 
     def get_queryset(self):
         return ChatGPTInteraction.objects.filter(user=self.request.user)

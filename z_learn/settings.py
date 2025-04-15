@@ -110,7 +110,6 @@ WSGI_APPLICATION = 'z_learn.wsgi.application'
 
 
 DATABASE_URL = config('DATABASE_URL')
-print(f"DATABASE_URL: {DATABASE_URL}") 
 
 DATABASES = {
     'default': {
@@ -181,6 +180,7 @@ REST_FRAMEWORK = {
     
     'DEFAULT_THROTTLE_RATES': {
         'chat_user': '25/day',  # Allow 25 requests per day for authenticated users in the ChatListCreateView
+        'chat_user_gpt': '20/day',
     }
 
 }
