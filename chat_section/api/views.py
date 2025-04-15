@@ -24,6 +24,7 @@ from rest_framework.serializers import ModelSerializer
 from google import genai
 from google.genai import types
 from django.conf import settings
+from django.apps import apps  # Import apps to resolve the custom user model
 
 # from drf_spectacular.utils import extend_schema, OpenApiResponse
 
@@ -52,10 +53,18 @@ class PostViewSet(viewsets.ViewSet):
         self.permission_classes = [permissions.IsAuthenticated]
         self.check_permissions(request)
         """ Handle POST requests to create a Post for a user """
-        user = request.user 
-        serializer = PostSerializer(data = request.data)
+        user = request.user
+        serializer = PostSerializer(data=request.data)
         if serializer.is_valid():
             post_question = serializer.save(post_user=user)
+
+            # Check if the user is enrolled in any Concourse
+            if ConcourseRegistration.objects.filter(user=user).exists():
+                try:
+                    generate_ai_comment_for_post(post_question)
+                except RuntimeError as e:
+                    return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)        
         
@@ -85,17 +94,45 @@ class PostViewSet(viewsets.ViewSet):
     
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
     def like(self, request, pk=None):
+        """Handle upvoting a post."""
         post = get_object_or_404(Post, pk=pk)
-        post.upvotes += 1
+        user = request.user
+
+        if user in post.upvoters.all():
+            return Response({'status': 'You have already upvoted this post.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        post.upvoters.add(user)
+        post.downvoters.remove(user)  # Remove from downvoters if previously downvoted
+        post.upvotes = post.upvoters.count()
+        post.downvotes = post.downvoters.count()
         post.save()
-        return Response({'status': 'Post liked'}, status = status.HTTP_200_OK)
+
+        return Response({
+            'status': 'Post liked',
+            'upvotes': post.upvotes,
+            'downvotes': post.downvotes
+        }, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
     def dislike(self, request, pk=None):
+        """Handle downvoting a post."""
         post = get_object_or_404(Post, pk=pk)
-        post.downvotes += 1
+        user = request.user
+
+        if user in post.downvoters.all():
+            return Response({'status': 'You have already downvoted this post.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        post.downvoters.add(user)
+        post.upvoters.remove(user)  # Remove from upvoters if previously upvoted
+        post.upvotes = post.upvoters.count()
+        post.downvotes = post.downvoters.count()
         post.save()
-        return Response({'status': 'Post disliked'}, status=status.HTTP_200_OK)
+
+        return Response({
+            'status': 'Post disliked',
+            'upvotes': post.upvotes,
+            'downvotes': post.downvotes
+        }, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['get'])
     @extend_schema(
@@ -123,6 +160,21 @@ class PostViewSet(viewsets.ViewSet):
         queryset = Post.objects.filter(category=category)
         serializer = self.serializer_class(queryset, many=True)
         return Response(serializer.data)
+
+    @action(detail=False, methods=['get'], url_path='user-posts')
+    def user_posts(self, request):
+        """Retrieve posts for a specific user based on the user_id query parameter"""
+        user_id = request.query_params.get('user_id')
+        if not user_id:
+            return Response({"error": "user_id query parameter is required."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Resolve the custom user model
+        CustomUser = apps.get_model(settings.AUTH_USER_MODEL)
+        user = get_object_or_404(CustomUser, id=user_id)
+        
+        queryset = Post.objects.filter(post_user=user).order_by("-date_created")
+        serializer = self.serializer_class(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
     
     
 class CommentViewSet(viewsets.ViewSet):
@@ -196,7 +248,7 @@ class CommentViewSet(viewsets.ViewSet):
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
     @extend_schema(
         description="Like a comment",
-        responses={200: OpenApiResponse(response={"status": "Comment liked"})},
+        responses={200: OpenApiResponse(response={"status": "Comment liked"})},  # Fix the misplaced argument
     )
     def like(self, request, post_id=None, pk=None):
         comment = get_object_or_404(Comment, id=pk, post_id=post_id)
@@ -204,13 +256,83 @@ class CommentViewSet(viewsets.ViewSet):
         comment.save()
         return Response({'status': 'Comment liked'}, status=status.HTTP_200_OK)
 
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    @extend_schema(
+        description="Dislike a comment",
+        responses={200: OpenApiResponse(response={"status": "Comment disliked"})},  # Fix the misplaced argument
+    )
+    def dislike(self, request, post_id=None, pk=None):
+        comment = get_object_or_404(Comment, id=pk, post_id=post_id)
+        comment.downvotes += 1
+        comment.save()
+        return Response({'status': 'Comment disliked'}, status=status.HTTP_200_OK)
 
-# Function to generate a Z-Bot comment
-def generate_zbot_comment(post):
-    client = genai.Client(api_key=settings.GEMINI_API_KEY)
-    model = "gemini-2.0-flash"
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    @extend_schema(
+        description="Generate a meaningful response for a post and add it as a comment.",
+        responses={200: OpenApiResponse(response={"status": "AI-generated comment added"})},
+    )
+    def generate_ai_comment(self, request, post_id=None):
+        """Generate an AI-based comment for a specific post."""
+        post = get_object_or_404(Post, id=post_id)
 
-    # Instructions for Z-Bot
+        # Instructions for AI
+        instructions = (
+            "You are Z-Bot, an AI assistant created by ZiloTech. "
+            "Your role is to provide helpful, concise, and insightful comments on user posts. "
+            "Analyze the content of the post and provide a meaningful response that adds value to the discussion. "
+            "Always maintain a professional and friendly tone."
+        )
+
+        # Build the prompt
+        prompt = f"{instructions}\n\nPost Content:\n{post.content}"
+
+        # Generate the AI response
+        client = genai.Client(api_key=settings.GEMINI_API_KEY)
+        model = "gemini-2.0-flash"
+        contents = [
+            types.Content(
+                role="user",
+                parts=[types.Part.from_text(text=prompt)],
+            )
+        ]
+        generate_content_config = types.GenerateContentConfig(
+            temperature=1,
+            top_p=0.95,
+            top_k=40,
+            max_output_tokens=250,
+            response_mime_type="text/plain",
+        )
+
+        try:
+            response_text = ""
+            for chunk in client.models.generate_content_stream(
+                model=model,
+                contents=contents,
+                config=generate_content_config,
+            ):
+                response_text += chunk.text
+
+            # Create a comment as Z-Bot
+            CustomUser = apps.get_model(settings.AUTH_USER_MODEL)
+            z_bot_user, created = CustomUser.objects.get_or_create(username="Z-Bot", defaults={"is_active": False})
+            Comment.objects.create(
+                post=post,
+                author=z_bot_user,
+                content=response_text,
+            )
+
+            return Response({'status': 'AI-generated comment added'}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': f"Error generating AI comment: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+def generate_ai_comment_for_post(post):
+    """Generate an AI-based comment for a specific post."""
+    # Ensure the post is an instance of Post
+    if not isinstance(post, Post):
+        raise ValueError("generate_ai_comment_for_post expects a Post instance.")
+
+    # Instructions for AI
     instructions = (
         "You are Z-Bot, an AI assistant created by ZiloTech. "
         "Your role is to provide helpful, concise, and insightful comments on user posts. "
@@ -222,6 +344,8 @@ def generate_zbot_comment(post):
     prompt = f"{instructions}\n\nPost Content:\n{post.content}"
 
     # Generate the AI response
+    client = genai.Client(api_key=settings.GEMINI_API_KEY)
+    model = "gemini-2.0-flash"
     contents = [
         types.Content(
             role="user",
@@ -245,27 +369,70 @@ def generate_zbot_comment(post):
         ):
             response_text += chunk.text
 
-        # Create a comment as Z-Bot
-        z_bot_user, created = User.objects.get_or_create(username="Z-Bot", defaults={"is_active": False})
-        ConcourComment.objects.create(
+        # Use the custom user model
+        CustomUser = apps.get_model(settings.AUTH_USER_MODEL)
+        z_bot_user, created = CustomUser.objects.get_or_create(username="Z-Bot", defaults={"is_active": False})
+        Comment.objects.create(
             post=post,
             author=z_bot_user,
             content=response_text,
         )
     except Exception as e:
-        print(f"Error generating Z-Bot comment: {str(e)}")
+        raise RuntimeError(f"Error generating AI comment: {str(e)}")
 
-# Update the ConcourPostViewSet to call the Z-Bot comment function
+def generate_ai_comment_for_concour_post(concour_post):
+    """Generate an AI-based comment for a specific ConcourPost."""
+    # Instructions for AI
+    instructions = (
+        "You are Z-Bot, an AI assistant created by ZiloTech. "
+        "Your role is to provide helpful, concise, and insightful comments on user posts. "
+        "Analyze the content of the post and provide a meaningful response that adds value to the discussion. "
+        "Always maintain a professional and friendly tone."
+    )
+
+    # Build the prompt
+    prompt = f"{instructions}\n\nPost Content:\n{concour_post.content}"
+
+    # Generate the AI response
+    client = genai.Client(api_key=settings.GEMINI_API_KEY)
+    model = "gemini-2.0-flash"
+    contents = [
+        types.Content(
+            role="user",
+            parts=[types.Part.from_text(text=prompt)],
+        )
+    ]
+    generate_content_config = types.GenerateContentConfig(
+        temperature=1,
+        top_p=0.95,
+        top_k=40,
+        max_output_tokens=250,
+        response_mime_type="text/plain",
+    )
+
+    try:
+        response_text = ""
+        for chunk in client.models.generate_content_stream(
+            model=model,
+            contents=contents,
+            config=generate_content_config,
+        ):
+            response_text += chunk.text
+
+        # Use the custom user model
+        CustomUser = apps.get_model(settings.AUTH_USER_MODEL)
+        z_bot_user, created = CustomUser.objects.get_or_create(username="Z-Bot", defaults={"is_active": False})
+        ConcourComment.objects.create(
+            post=concour_post,
+            author=z_bot_user,
+            content=response_text,
+        )
+    except Exception as e:
+        raise RuntimeError(f"Error generating AI comment: {str(e)}")
+
 class ConcourPostViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class = ConcourPostSerializer
-
-    def list(self, request, concourse_id=None):
-        queryset = ConcourPost.objects.filter(concourse_id=concourse_id).order_by("-date_created")
-        if not ConcourseRegistration.objects.filter(user=request.user, concourse_id=concourse_id).exists():
-            return Response({"error": "You are not enrolled in this concourse."}, status=status.HTTP_403_FORBIDDEN)
-        serializer = self.serializer_class(queryset, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def create(self, request, concourse_id=None):
         if not ConcourseRegistration.objects.filter(user=request.user, concourse_id=concourse_id).exists():
@@ -274,11 +441,21 @@ class ConcourPostViewSet(viewsets.ViewSet):
         if serializer.is_valid():
             post = serializer.save(post_user=request.user, concourse_id=concourse_id)
             
-            # Call the function to generate a Z-Bot comment
-            generate_zbot_comment(post)
+            # Call the standalone function for ConcourPost
+            try:
+                generate_ai_comment_for_concour_post(post)
+            except RuntimeError as e:
+                return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def list(self, request, concourse_id=None):
+        queryset = ConcourPost.objects.filter(concourse_id=concourse_id).order_by("-date_created")
+        if not ConcourseRegistration.objects.filter(user=request.user, concourse_id=concourse_id).exists():
+            return Response({"error": "You are not enrolled in this concourse."}, status=status.HTTP_403_FORBIDDEN)
+        serializer = self.serializer_class(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def retrieve(self, request, concourse_id=None, pk=None):
         post = get_object_or_404(ConcourPost, pk=pk, concourse_id=concourse_id)
@@ -363,5 +540,3 @@ class ConcourseListView(ListAPIView):
     queryset = Concourse.objects.all()
     serializer_class = ConcourseSerializer
     permission_classes = [AllowAny]
-
-
