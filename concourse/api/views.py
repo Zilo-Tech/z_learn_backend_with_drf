@@ -1,8 +1,8 @@
 from .serializers import (LatestNewsSerializer, ConcourseDepartmentSerializer,
-                          ConcourseSerializer, ConcourseRegistrationSerializer, ConcourseTypeFieldSerializer, ConcoursePastPapersSerializer,ConcourseResourceSerializer,ConcourseSolutionGuideSerializer)
+                          ConcourseSerializer, ConcourseRegistrationSerializer, ConcourseTypeFieldSerializer, ConcoursePastPapersSerializer,ConcourseResourceSerializer,ConcourseSolutionGuideSerializer, QuizSerializer, UserQuizResultSerializer)
 
 from concourse.models import (Concourse, ConcourseDepartment, LatestNews,ConcourseResource,
-                              ConcourseRegistration, ConcourseTypeField, ConcoursePastPapers,ConcourseSolutionGuide)
+                              ConcourseRegistration, ConcourseTypeField, ConcoursePastPapers,ConcourseSolutionGuide, Quiz, Question, UserQuizResult)
 
 from django.shortcuts import get_object_or_404
 from rest_framework import viewsets
@@ -18,8 +18,10 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework import generics, permissions
 from rest_framework.filters import SearchFilter
 from rest_framework.views import APIView
-
-
+import csv
+import io
+import json
+from rest_framework.parsers import MultiPartParser, JSONParser
 
 
 # Secret keys not to be here
@@ -29,20 +31,26 @@ application_key = "81c6eb7ab02fa9e81bf7e07beb77c949129bcfab"
 
 
 class ConcourseTypeFieldViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for managing ConcourseTypeField objects.
+    - Allows CRUD operations for concourse type fields (e.g., Engineering, Medicine).
+    """
     permission_classes = [AdminUserOrReadOnly]
     serializer_class = ConcourseTypeFieldSerializer
     queryset = ConcourseTypeField.objects.all()
     
 class ConcourseViewSet(viewsets.GenericViewSet):
+    """
+    ViewSet for managing Concourse objects.
+    - List all active concourses.
+    - Retrieve, create, update, or delete a specific concourse.
+    """
     permission_classes = [AdminUserOrReadOnly]
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['is_active', 'concourseType__concourseTypeField']
     @extend_schema(
-        description = "List all Concourse",
-        responses = {
-            200: ConcourseSerializer(many=True),
-            403: OpenApiResponse(response={"error": "You are not authorized to view concourses."}, description="You are not authorized to view concourses."),
-        }
+        description="List all active concourses.",
+        responses={200: ConcourseSerializer(many=True)},
     )
     def list(self, request):
         queryset = Concourse.objects.filter(is_active=True)
@@ -51,11 +59,8 @@ class ConcourseViewSet(viewsets.GenericViewSet):
         return Response(serializer.data)
     
     @extend_schema(
-        description = "List Retrieve a particular Concourse object",
-        responses = {
-            200: ConcourseSerializer,
-            403: OpenApiResponse(response={"error": "You are not authorized to view concourses."}, description="You are not authorized to view concourses."),
-        }
+        description="Retrieve a specific concourse by ID.",
+        responses={200: ConcourseSerializer},
     )
     def retrieve(self, request, pk=None):
         queryset = Concourse.objects.all()
@@ -64,11 +69,8 @@ class ConcourseViewSet(viewsets.GenericViewSet):
         return Response(serializer.data)
     
     @extend_schema(
-        description = "Create a new Concourse",
-        responses = {
-            200: ConcourseSerializer,
-            403: OpenApiResponse(response={"error": "You are not authorized to view concourses."}, description="You are not authorized to view concourses."),
-        }
+        description="Create a new concourse under a specific type field.",
+        responses={201: ConcourseSerializer},
     )
     def create(self, request, concourse_type_field_id=None):
         concourse_type_field = get_object_or_404(ConcourseTypeField, id = concourse_type_field_id)
@@ -79,11 +81,8 @@ class ConcourseViewSet(viewsets.GenericViewSet):
         return Response(serializer.errors, status =status.HTTP_400_BAD_REQUEST)
     
     @extend_schema(
-        description = "Update a neew Concourse",
-        responses = {
-            200: ConcourseSerializer,
-            403: OpenApiResponse(response={"error": "You are not authorized to view concourses."}, description="You are not authorized to view concourses."),
-        }
+        description="Update an existing concourse by ID.",
+        responses={200: ConcourseSerializer},
     )
     def update(self, request, pk): 
         concourse_put_id = get_object_or_404(Concourse, pk=pk)
@@ -94,11 +93,8 @@ class ConcourseViewSet(viewsets.GenericViewSet):
         return Response(serializer.errors, status = status.HTTP_400_BAD_REQUEST)
     
     @extend_schema(
-        description = "Delete a concourse",
-        responses = {
-            200: ConcourseSerializer,
-            403: OpenApiResponse(response={"error": "You are not authorized to view concourses."}, description="You are not authorized to view concourses."),
-        }
+        description="Delete a specific concourse by ID.",
+        responses={204: None},
     )
     def destroy(self, request, pk=None):
         concourse_delete_id = get_object_or_404(Concourse, pk=pk)
@@ -107,15 +103,16 @@ class ConcourseViewSet(viewsets.GenericViewSet):
     
     
 class LatestNewsViewSet(viewsets.ViewSet):
+    """
+    ViewSet for managing LatestNews objects.
+    - List, create, retrieve, update, or delete news items for a specific concourse.
+    """
     permission_classes = [AdminUserOrReadOnly]
     serializer_class = LatestNewsSerializer
     
     @extend_schema(
-        description = "List all LatestNews of a particular Concourse",
-        responses = {
-            200: LatestNewsSerializer(many=True),
-            403: OpenApiResponse(response={"error": "You are not authorized to view concourses."}, description="You are not authorized to view concourses."),
-        }
+        description="List all news items for a specific concourse.",
+        responses={200: LatestNewsSerializer(many=True)},
     )
     def list(self, request, concourse_id=None):
         concourse = get_object_or_404(Concourse, id=concourse_id)
@@ -124,11 +121,8 @@ class LatestNewsViewSet(viewsets.ViewSet):
         return Response(serializer.data)
     
     @extend_schema(
-        description = "create a LatestNews for a concourse",
-        responses = {
-            200: LatestNewsSerializer,
-            403: OpenApiResponse(response={"error": "You are not authorized to view concourses."}, description="You are not authorized to view concourses."),
-        }
+        description="Create a news item for a specific concourse.",
+        responses={201: LatestNewsSerializer},
     ) 
     def create(self, request, concourse_id=None):
         concourse = get_object_or_404(Concourse, id=concourse_id)
@@ -142,11 +136,8 @@ class LatestNewsViewSet(viewsets.ViewSet):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
     @extend_schema(
-        description = "Retrieve a LatestNews Item",
-        responses = {
-            200: LatestNewsSerializer,
-            403: OpenApiResponse(response={"error": "You are not authorized to view concourses."}, description="You are not authorized to view concourses."),
-        }
+        description="Retrieve a specific news item by ID.",
+        responses={200: LatestNewsSerializer},
     )
     def retrieve(self, request, concourse_id=None, pk=None):
         # Get the specific latest news item by ID and concourse ID
@@ -156,11 +147,8 @@ class LatestNewsViewSet(viewsets.ViewSet):
     
     
     @extend_schema(
-        description = "Update a LatestNews Item",
-        responses = {
-            200: LatestNewsSerializer,
-            403: OpenApiResponse(response={"error": "You are not authorized to view concourses."}, description="You are not authorized to view concourses."),
-        }
+        description="Update a specific news item by ID.",
+        responses={200: LatestNewsSerializer},
     )
     def update(self, request, concourse_id=None, pk=None):
         latest_news_item = get_object_or_404(LatestNews, id=pk, concourse_id=concourse_id)
@@ -172,11 +160,8 @@ class LatestNewsViewSet(viewsets.ViewSet):
     
     
     @extend_schema(
-        description = "Delete a LatestNews Item",
-        responses = {
-            200: LatestNewsSerializer,
-            403: OpenApiResponse(response={"error": "You are not authorized to view concourses."}, description="You are not authorized to view concourses."),
-        }
+        description="Delete a specific news item by ID.",
+        responses={204: None},
     )
     def destroy(self, request, concourse_id=None, pk=None):
         latest_news_item = get_object_or_404(LatestNews, id=pk, concourse_id=concourse_id)
@@ -411,4 +396,81 @@ class ConcourseListView(APIView):
     def get(self, request):
         concourses = Concourse.objects.all()
         serializer = ConcourseSerializer(concourses, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class QuizViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for managing Quiz objects.
+    - List, retrieve, create, update, or delete quizzes.
+    - Upload questions in bulk via CSV or JSON.
+    - Submit quiz results and calculate scores.
+    - Retrieve leaderboard for a quiz.
+    """
+    queryset = Quiz.objects.all()
+    serializer_class = QuizSerializer
+
+    @action(detail=True, methods=["post"], url_path="upload-questions", parser_classes=[MultiPartParser])
+    @extend_schema(
+        description="Upload questions for a quiz in bulk via CSV or JSON.",
+        responses={201: {"message": "Questions uploaded successfully"}},
+    )
+    def upload_questions(self, request, pk=None):
+        quiz = self.get_object()
+        file = request.FILES.get("file")
+        if not file:
+            return Response({"error": "No file provided"}, status=status.HTTP_400_BAD_REQUEST)
+
+        if file.name.endswith(".csv"):
+            data = csv.DictReader(io.StringIO(file.read().decode("utf-8")))
+        elif file.name.endswith(".json"):
+            data = json.load(file)
+        else:
+            return Response({"error": "Unsupported file format"}, status=status.HTTP_400_BAD_REQUEST)
+
+        for row in data:
+            Question.objects.create(
+                quiz=quiz,
+                text=row["question"],
+                option_1=row["option_1"],
+                option_2=row["option_2"],
+                option_3=row["option_3"],
+                option_4=row["option_4"],
+                correct_option=int(row["correct_option"]),
+            )
+
+        return Response({"message": "Questions uploaded successfully"}, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=["post"], url_path="submit-results")
+    @extend_schema(
+        description="Submit quiz answers and calculate the user's score.",
+        responses={200: {"score": "float"}},
+    )
+    def submit_results(self, request, pk=None):
+        quiz = self.get_object()
+        user = request.user
+        answers = request.data.get("answers", {})
+
+        score = 0
+        total_questions = quiz.questions.count()
+
+        for question_id, selected_option in answers.items():
+            question = Question.objects.get(id=question_id, quiz=quiz)
+            if question.correct_option == int(selected_option):
+                score += 1
+
+        percentage_score = (score / total_questions) * 100
+        UserQuizResult.objects.create(user=user, quiz=quiz, score=percentage_score)
+
+        return Response({"score": percentage_score}, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=["get"], url_path="leaderboard")
+    @extend_schema(
+        description="Retrieve the leaderboard for a quiz, showing the top 10 users by score.",
+        responses={200: UserQuizResultSerializer(many=True)},
+    )
+    def leaderboard(self, request, pk=None):
+        quiz = self.get_object()
+        results = UserQuizResult.objects.filter(quiz=quiz).order_by("-score")[:10]
+        serializer = UserQuizResultSerializer(results, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)

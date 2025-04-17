@@ -14,13 +14,12 @@ class UserSerializer(serializers.ModelSerializer):
         style={'input_type': 'password'},
         write_only=True
     )
-    # Make whatsapp_number required by default
     whatsapp_number = serializers.CharField(required=True)
+    email = serializers.EmailField(required=False)  # Make email optional
 
     class Meta:
-        model = User 
-        # Remove 'email' from the fields list if you don't want it on signup.
-        fields = ['username', 'password', 'password2', 'whatsapp_number']
+        model = User
+        fields = ['username', 'email', 'password', 'password2', 'whatsapp_number']
         extra_kwargs = {
             'password': {
                 'write_only': True
@@ -28,32 +27,29 @@ class UserSerializer(serializers.ModelSerializer):
         }
         
     def validate(self, data):
-        # Ensure both passwords match.
         if data['password'] != data['password2']:
             raise serializers.ValidationError({
                 'error': _('The 2 passwords should match')
             })
-        # Optionally, add any custom validation for whatsapp_number if needed.
         return data
     
     def save(self):
         password = self.validated_data['password']
-        # Remove password2 as it's no longer needed after validation.
         self.validated_data.pop('password2')
         username = self.validated_data['username']
+        email = self.validated_data.get('email', None)  # Handle optional email
         whatsapp_number = self.validated_data['whatsapp_number']
         
-        # Optionally, you can check for duplicate whatsapp_number
         if User.objects.filter(whatsapp_number=whatsapp_number).exists():
             raise serializers.ValidationError({
                 'error': _('This WhatsApp number has been taken')
             })
         
-        # Create the user without email
         user = User(
             username=username,
+            email=email,  # Save None if email is not provided
             whatsapp_number=whatsapp_number
-        ) 
+        )
         user.set_password(password)
         user.save()
         return user

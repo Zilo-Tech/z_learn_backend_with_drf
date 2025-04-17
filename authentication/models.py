@@ -18,8 +18,7 @@ def create_auth_token(sender, instance=None, created=False, **kwargs):
 
 
 class CustomUser(AbstractUser):
-    email = models.EmailField(unique=False, blank=True, null=True)
-    # whatsapp_number = models.CharField(max_length=15, unique=True)
+    email = models.EmailField(unique=True, blank=True, null=True)  # Ensure unique=True for email
     whatsapp_number = models.CharField(max_length=20, unique=True, blank=True, null=True)
 
 
