@@ -69,7 +69,7 @@ def send_whatsapp_message(request):
             formatted_number = validate_cameroon_number(user.whatsapp_number)
             if formatted_number:
                 numbers.append(formatted_number)
-
+    
         # Debug logs
         print(f"Validated Numbers to send messages to: {numbers}")
 

@@ -1,6 +1,5 @@
-from concourse.models import Concourse,ConcourseResource, ConcourseDepartment,LatestNews, ConcourseRegistration, ConcourseTypeField, ConcoursePastPapers, ConcourseSolutionGuide
+from concourse.models import Concourse, ConcourseResource, ConcourseDepartment, LatestNews, ConcourseRegistration, ConcourseTypeField, ConcoursePastPapers, ConcourseSolutionGuide, Quiz, Question, UserQuizResult
 from rest_framework import serializers
-
 
 class LatestNewsSerializer(serializers.ModelSerializer):
     class Meta:
@@ -19,15 +18,14 @@ class ConcourseRegistrationSerializer(serializers.ModelSerializer):
         read_only_fields = ['concourse', 'user']
     
     def create(self, validated_data):
-        payment_service = validated_data.pop('payment_service', None)  # Remove payment_service from validated_data
-        # Create the registration without payment_service
+        payment_service = validated_data.pop('payment_service', None)
         registration = super().create(validated_data)
-        # Optionally, handle the payment_service logic here if needed
         return registration
-    
+
 class ConcourseDepartmentSerializer(serializers.ModelSerializer):
     latestNews = LatestNewsSerializer(many=True, read_only=True)
     concourse = ConcourseRegistrationSerializer(many=True, read_only=True)
+
     class Meta:
         model = ConcourseDepartment
         fields = "__all__"
@@ -37,6 +35,7 @@ class ConcourseSerializer(serializers.ModelSerializer):
     concourseTypeName = serializers.CharField(source='concourseType.concourseTypeField', read_only=True)
     departments = ConcourseDepartmentSerializer(many=True, read_only=True)
     latestNews = LatestNewsSerializer(many=True, read_only=True)
+
     class Meta:
         model = Concourse
         fields = [
@@ -57,25 +56,19 @@ class ConcourseSerializer(serializers.ModelSerializer):
             'latestNews'
         ]       
         read_only_fields = ['concourseType']
-        # extra_fields = {
-        #     "concourseType": {'write_only': True}
-        # }
 
 class ConcourseTypeFieldSerializer(serializers.ModelSerializer):
     concourses = ConcourseSerializer(many=True, read_only=True)
+
     class Meta:
         model = ConcourseTypeField
         fields = "__all__"
-        
-        
-        
 
 class ConcoursePastPapersSerializer(serializers.ModelSerializer):
     class Meta:
         model = ConcoursePastPapers
         fields = "__all__"
-    
-        
+
 class ConcourseResourceSerializer(serializers.ModelSerializer):
     class Meta:
         model = ConcourseResource
@@ -84,4 +77,38 @@ class ConcourseResourceSerializer(serializers.ModelSerializer):
 class ConcourseSolutionGuideSerializer(serializers.ModelSerializer):
     class Meta:
         model = ConcourseSolutionGuide
+        fields = "__all__"
+
+class QuestionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Question
+        fields = [
+            "id",
+            "quiz",
+            "text",
+            "option_1",
+            "option_2",
+            "option_3",
+            "option_4",
+            "correct_option",
+        ]
+
+class QuizSerializer(serializers.ModelSerializer):
+    questions = QuestionSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Quiz
+        fields = [
+            "id",
+            "title",
+            "description",
+            "concourse",
+            "duration",
+            "created_date",
+            "questions",
+        ]
+
+class UserQuizResultSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserQuizResult
         fields = "__all__"
