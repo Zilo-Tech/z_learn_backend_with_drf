@@ -10,7 +10,7 @@ router.register(r'concourse_department', ConcourseDepartmentViewSet, basename='c
 router.register(r'concourse_type_field', ConcourseTypeFieldViewSet, basename='concourse_type')
 # router.register(r'concourse_registration', ConcourseRegistrationViewSet, basename='concourse_registration')
 router.register(r'concourse/(?P<concourse_id>\d+)/solution-guides', ConcourseSolutionGuideViewSet, basename='concourse-solution-guides')
-router.register(r'quizzes', QuizViewSet, basename='quiz')
+router.register(r'concourse/(?P<concourse_id>\d+)/quizzes', QuizViewSet, basename='quiz')
 
 
 latest_news_list = LatestNewsViewSet.as_view({

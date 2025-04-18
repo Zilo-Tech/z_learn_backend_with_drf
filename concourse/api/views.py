@@ -407,8 +407,11 @@ class QuizViewSet(viewsets.ModelViewSet):
     - Submit quiz results and calculate scores.
     - Retrieve leaderboard for a quiz.
     """
-    queryset = Quiz.objects.all()
     serializer_class = QuizSerializer
+
+    def get_queryset(self):
+        concourse_id = self.kwargs.get('concourse_id')
+        return Quiz.objects.filter(concourse_id=concourse_id)
 
     @action(detail=True, methods=["post"], url_path="upload-questions", parser_classes=[MultiPartParser])
     @extend_schema(
