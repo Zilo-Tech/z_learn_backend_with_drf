@@ -449,7 +449,7 @@ class QuizViewSet(viewsets.ModelViewSet):
         description="Submit all quiz answers at once and calculate the user's score.",
         responses={200: {"score": "float", "details": "list"}},
     )
-    def submit_results(self, request, pk=None):
+    def submit_results(self, request, concourse_id=None, pk=None):
         quiz = self.get_object()
         user = request.user
         answers = request.data.get("answers", {})  # Expecting a dictionary of question_id: selected_option
