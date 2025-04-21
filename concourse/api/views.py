@@ -446,26 +446,51 @@ class QuizViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=["post"], url_path="submit-results")
     @extend_schema(
-        description="Submit quiz answers and calculate the user's score.",
-        responses={200: {"score": "float"}},
+        description="Submit all quiz answers at once and calculate the user's score.",
+        responses={200: {"score": "float", "details": "list"}},
     )
     def submit_results(self, request, pk=None):
         quiz = self.get_object()
         user = request.user
-        answers = request.data.get("answers", {})
+        answers = request.data.get("answers", {})  # Expecting a dictionary of question_id: selected_option
+
+        if not answers:
+            return Response({"error": "No answers provided"}, status=status.HTTP_400_BAD_REQUEST)
 
         score = 0
         total_questions = quiz.questions.count()
+        details = []
 
-        for question_id, selected_option in answers.items():
-            question = Question.objects.get(id=question_id, quiz=quiz)
-            if question.correct_option == int(selected_option):
+        for question in quiz.questions.all():
+            question_id = str(question.id)
+            selected_option = answers.get(question_id)
+
+            if selected_option is None:
+                details.append({
+                    "question_id": question_id,
+                    "status": "unanswered",
+                    "correct_option": question.correct_option
+                })
+                continue
+
+            is_correct = question.correct_option == int(selected_option)
+            if is_correct:
                 score += 1
+
+            details.append({
+                "question_id": question_id,
+                "selected_option": int(selected_option),
+                "correct_option": question.correct_option,
+                "status": "correct" if is_correct else "incorrect"
+            })
 
         percentage_score = (score / total_questions) * 100
         UserQuizResult.objects.create(user=user, quiz=quiz, score=percentage_score)
 
-        return Response({"score": percentage_score}, status=status.HTTP_200_OK)
+        return Response({
+            "score": percentage_score,
+            "details": details
+        }, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=["get"], url_path="leaderboard")
     @extend_schema(
