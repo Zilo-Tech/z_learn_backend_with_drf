@@ -418,7 +418,7 @@ class QuizViewSet(viewsets.ModelViewSet):
         description="Upload questions for a quiz in bulk via CSV or JSON.",
         responses={201: {"message": "Questions uploaded successfully"}},
     )
-    def upload_questions(self, request, pk=None):
+    def upload_questions(self, request, concourse_id=None, pk=None):
         quiz = self.get_object()
         file = request.FILES.get("file")
         if not file:
