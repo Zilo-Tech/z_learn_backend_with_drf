@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from annoucement_news.models import Notification, NotificationReadStatus
+from annoucement_news.models import Notification, NotificationReadStatus, MessageToStudents
 
 
 class NotificationReadStatusSerializer(serializers.ModelSerializer):
@@ -22,3 +22,10 @@ class NotificationSerializer(serializers.ModelSerializer):
             read_status = NotificationReadStatus.objects.filter(user=request.user, notification=obj).first()
             return read_status.is_read if read_status else False
         return False
+    
+
+
+class MessageToStudentsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MessageToStudents
+        fields = "__all__"
