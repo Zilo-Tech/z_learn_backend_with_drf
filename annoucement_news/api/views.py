@@ -8,8 +8,8 @@ from rest_framework import viewsets
 from rest_framework.decorators import action, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from drf_yasg.utils import swagger_auto_schema
-from .serializers import NotificationSerializer
-from annoucement_news.models import Notification, NotificationReadStatus
+from .serializers import NotificationSerializer, MessageToStudentsSerializer
+from annoucement_news.models import Notification, NotificationReadStatus, MessageToStudents
 from .permissions import IsAdminOrReadOnly
 from rest_framework.pagination import LimitOffsetPagination
 from .pagination import LargeResultsSetPagination
@@ -48,3 +48,10 @@ class NotificationViewSet(viewsets.ModelViewSet):
         },
             status = status.HTTP_200_OK)
     
+    
+class MessageToStudentsViewSet(viewsets.ModelViewSet):
+    """This viewset automatically provides `list`, `create`, `retrieve`,
+    `update`, and `destroy` actions."""
+    permission_classes = [IsAdminOrReadOnly]    
+    serializer_class = MessageToStudentsSerializer
+    queryset = MessageToStudents.objects.all().order_by('-date_created')

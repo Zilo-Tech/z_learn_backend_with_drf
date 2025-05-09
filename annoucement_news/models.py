@@ -25,3 +25,15 @@ class NotificationReadStatus(models.Model):
     
     class Meta:
         unique_together = ('user', 'notification')
+
+
+
+class MessageToStudents(models.Model):
+    title = models.CharField(max_length=255)
+    content = models.TextField()
+    date_created = models.DateTimeField(auto_now_add=True)
+    link = models.URLField(null=True, blank=True)
+
+
+    def __str__(self):
+        return self.title
