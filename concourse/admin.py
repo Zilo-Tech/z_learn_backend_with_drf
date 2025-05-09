@@ -5,7 +5,7 @@ from django import forms
 from django.http import HttpResponse
 import csv
 import json
-from .models import Quiz, Question, Concourse, ConcourseDepartment, ConcourseResource, LatestNews, ConcourseRegistration, ConcourseTypeField, ConcoursePastPapers, ConcourseSolutionGuide, UserQuizResult
+from .models import Quiz, Question, Concourse, ConcourseDepartment, ConcourseResource, LatestNews, ConcourseRegistration, ConcourseTypeField, ConcoursePastPapers, ConcourseSolutionGuide, UserQuizResult, GlobalSettings
 
 # Register your models here.
 admin.site.register(Concourse)
@@ -83,3 +83,5 @@ class QuestionAdmin(admin.ModelAdmin):
     list_display = ("text", "quiz", "correct_option")
     search_fields = ("text",)
     list_filter = ("quiz",)
+    
+admin.site.register(GlobalSettings)

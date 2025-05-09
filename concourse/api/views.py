@@ -2,7 +2,7 @@ from .serializers import (LatestNewsSerializer, ConcourseDepartmentSerializer,
                           ConcourseSerializer, ConcourseRegistrationSerializer, ConcourseTypeFieldSerializer, ConcoursePastPapersSerializer,ConcourseResourceSerializer,ConcourseSolutionGuideSerializer, QuizSerializer, UserQuizResultSerializer)
 
 from concourse.models import (Concourse, ConcourseDepartment, LatestNews,ConcourseResource,
-                              ConcourseRegistration, ConcourseTypeField, ConcoursePastPapers,ConcourseSolutionGuide, Quiz, Question, UserQuizResult)
+                              ConcourseRegistration, ConcourseTypeField, ConcoursePastPapers,ConcourseSolutionGuide, Quiz, Question, UserQuizResult, GlobalSettings)
 
 from django.shortcuts import get_object_or_404
 from rest_framework import viewsets
@@ -22,7 +22,9 @@ import csv
 import io
 import json
 from rest_framework.parsers import MultiPartParser, JSONParser
+from django.contrib.auth import get_user_model
 
+CustomUser = get_user_model()
 
 # Secret keys not to be here
 access_key = "15a980c6-82e6-4d1e-a759-0afbfde8daef"
@@ -227,14 +229,28 @@ class ConcourseRegistrationViewSet(viewsets.ViewSet):
         # Interacting with the payment gateway
         phone_number = serializer.validated_data.get('phoneNumber')
         payment_service = serializer.validated_data.get('payment_service')
-        payment_results = make_payment(application_key, access_key, secret_key, amount=11, service=payment_service, payer=phone_number, trxID='1')
+        payment_results = make_payment(application_key, access_key, secret_key, amount=concourse.price, service=payment_service, payer=phone_number, trxID='1')
         
-        # Simulate payment response(This will be replaced with the actual API integration)
         if not payment_results["Operation Success"] or not payment_results["Transaction Success"]:
             return Response({'error': 'Payment failed. Registration is not completed'}, status=status.HTTP_400_BAD_REQUEST)
         
         # Save the registration details
         registration = serializer.save(concourse=concourse, user=request.user, payment_status=True)
+
+        # Calculate and allocate bonus
+        global_settings = GlobalSettings.objects.first()
+        bonus_percentage = global_settings.bonus_percentage if global_settings else 10.00  # Default to 10%
+        bonus_amount = (bonus_percentage / 100) * concourse.price
+
+        referrer_code = request.data.get('referrer_code')
+        if referrer_code:
+            try:
+                referrer = CustomUser.objects.get(whatsapp_number=referrer_code)
+                referrer.bonus_balance += bonus_amount
+                referrer.save()
+            except CustomUser.DoesNotExist:
+                pass  # Ignore if the referrer does not exist
+
         return Response(ConcourseRegistrationSerializer(registration).data, status=status.HTTP_201_CREATED)
     
     @action(detail=True, methods=['get'], url_path='concourse_list_all_users')
@@ -287,6 +303,20 @@ class ConcourseRegistrationViewSet(viewsets.ViewSet):
         count = ConcourseRegistration.objects.filter(concourse=concourse, payment_status=True).count()
         return Response({'total_users_enrolled': count}, status=status.HTTP_200_OK)
     
+    @action(detail=False, methods=['get'], url_path='referred-users')
+    @permission_classes([IsAuthenticated])
+    @extend_schema(
+        description="List all users who have paid using the current user as a referral.",
+        responses={
+            200: ConcourseRegistrationSerializer(many=True),
+            403: OpenApiResponse(response={"error": "You are not authorized to view this information."}, description="You are not authorized to view this information."),
+        }
+    )
+    def referred_users(self, request):
+        user = request.user
+        referred_registrations = ConcourseRegistration.objects.filter(referrer=user, payment_status=True)
+        serializer = ConcourseRegistrationSerializer(referred_registrations, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
     
 
 class ConcoursePastPapersView(generics.ListAPIView):
