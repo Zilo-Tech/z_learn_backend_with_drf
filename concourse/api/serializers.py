@@ -1,5 +1,8 @@
-from concourse.models import Concourse, ConcourseResource, ConcourseDepartment, LatestNews, ConcourseRegistration, ConcourseTypeField, ConcoursePastPapers, ConcourseSolutionGuide, Quiz, Question, UserQuizResult
+from concourse.models import Concourse, ConcourseResource, ConcourseDepartment, LatestNews, ConcourseRegistration, ConcourseTypeField, ConcoursePastPapers, ConcourseSolutionGuide, Quiz, Question, UserQuizResult, GlobalSettings
 from rest_framework import serializers
+from django.contrib.auth import get_user_model
+
+CustomUser = get_user_model()
 
 class LatestNewsSerializer(serializers.ModelSerializer):
     class Meta:
@@ -11,16 +14,27 @@ class ConcourseRegistrationSerializer(serializers.ModelSerializer):
     user = serializers.StringRelatedField(read_only=True)
     concourse = serializers.StringRelatedField(read_only=True)
     payment_service = serializers.ChoiceField(choices=[('MTN', 'MTN'), ('ORANGE', 'ORANGE')], write_only=True)
+    referrer_code = serializers.CharField(write_only=True, required=False, help_text="WhatsApp number of the referrer")
 
     class Meta: 
         model = ConcourseRegistration
-        fields = ["phoneNumber", "user", "concourse", "payment_service", "id"]
+        fields = ["phoneNumber", "user", "concourse", "payment_service", "id", "referrer_code"]
         read_only_fields = ['concourse', 'user']
     
+    def validate_referrer_code(self, value):
+        if value:
+            try:
+                referrer = CustomUser.objects.get(whatsapp_number=value)
+            except CustomUser.DoesNotExist:
+                raise serializers.ValidationError("Invalid referral code. No user found with this WhatsApp number.")
+            return referrer
+        return None
+
     def create(self, validated_data):
-        payment_service = validated_data.pop('payment_service', None)
-        registration = super().create(validated_data)
-        return registration
+        referrer = validated_data.pop('referrer_code', None)
+        if referrer:
+            validated_data['referrer'] = referrer
+        return super().create(validated_data)
 
 class ConcourseDepartmentSerializer(serializers.ModelSerializer):
     latestNews = LatestNewsSerializer(many=True, read_only=True)
@@ -53,7 +67,8 @@ class ConcourseSerializer(serializers.ModelSerializer):
             'created_by',
             'concourseTypeName', 
             'departments',
-            'latestNews'
+            'latestNews',
+            'bonus_value'  # Added bonus_value field
         ]       
         read_only_fields = ['concourseType']
 
@@ -112,3 +127,8 @@ class UserQuizResultSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserQuizResult
         fields = "__all__"
+
+class GlobalSettingsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = GlobalSettings
+        fields = ['bonus_percentage']

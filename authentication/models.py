@@ -20,6 +20,8 @@ def create_auth_token(sender, instance=None, created=False, **kwargs):
 class CustomUser(AbstractUser):
     email = models.EmailField(unique=True, blank=True, null=True)  # Ensure unique=True for email
     whatsapp_number = models.CharField(max_length=20, unique=True, blank=True, null=True)
+    bonus_balance = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, help_text="Referral bonus balance")
+    referral_code = models.CharField(max_length=20, blank=True, null=True, help_text="WhatsApp number of the referrer (optional)")
 
 
     class Meta:

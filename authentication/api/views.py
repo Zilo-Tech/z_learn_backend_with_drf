@@ -2,7 +2,7 @@ from rest_framework.decorators import api_view
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import authentication, permissions
-from django.contrib.auth.models import User 
+from django.contrib.auth import get_user_model
 from rest_framework import status
 from rest_framework import viewsets
 from rest_framework.authtoken.models import Token
@@ -15,7 +15,7 @@ from rest_framework import generics, status
 from rest_framework.response import Response
 from .serializers import RequestOTPSerializer, VerifyOTPSerializer
 
-
+CustomUser = get_user_model()
 
 class RegisterUser(viewsets.ViewSet):
     """This class will allow user to Register a user """
@@ -117,6 +117,8 @@ class RequestPasswordResetOTPView(generics.GenericAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
+        email = serializer.validated_data.get('email')
+        user = CustomUser.objects.get(email=email)
         return Response(
             {"message": "OTP has been sent to your email."}, status=status.HTTP_200_OK
         )
@@ -130,6 +132,8 @@ class VerifyPasswordResetOTPView(generics.GenericAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
+        email = serializer.validated_data.get('email')
+        user = CustomUser.objects.get(email=email)
         return Response(
             {"message": "Your password has been successfully reset."}, status=status.HTTP_200_OK
         )

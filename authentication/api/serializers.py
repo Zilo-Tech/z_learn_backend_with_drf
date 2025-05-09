@@ -1,12 +1,9 @@
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.password_validation import validate_password
 
-from django.contrib.auth import get_user_model
-from django.utils.translation import gettext_lazy as _
-
-User = get_user_model()
+CustomUser = get_user_model()
 
 class UserSerializer(serializers.ModelSerializer):
     password2 = serializers.CharField(
@@ -15,10 +12,11 @@ class UserSerializer(serializers.ModelSerializer):
     )
     whatsapp_number = serializers.CharField(required=True)
     email = serializers.EmailField(required=False)  # Make email optional
+    referral_code = serializers.CharField(required=False, allow_blank=True, help_text="WhatsApp number of the referrer (optional)")
 
     class Meta:
-        model = User
-        fields = ['username', 'email', 'password', 'password2', 'whatsapp_number']
+        model = CustomUser
+        fields = ['username', 'email', 'password', 'password2', 'whatsapp_number', 'referral_code']
         extra_kwargs = {
             'password': {
                 'write_only': True
@@ -35,10 +33,20 @@ class UserSerializer(serializers.ModelSerializer):
     
     
     def validate(self, data):
+        # Validate password match
         if data['password'] != data['password2']:
             raise serializers.ValidationError({
                 'error': _('The 2 passwords should match')
             })
+
+        # Validate referral_code if provided
+        referral_code = data.get('referral_code')
+        if referral_code:
+            if not CustomUser.objects.filter(whatsapp_number=referral_code).exists():
+                raise serializers.ValidationError({
+                    'referral_code': _('Invalid referral code. No user found with this WhatsApp number.')
+                })
+
         return data
     
     def save(self):
@@ -47,16 +55,18 @@ class UserSerializer(serializers.ModelSerializer):
         username = self.validated_data['username']
         email = self.validated_data.get('email', None)  # Handle optional email
         whatsapp_number = self.validated_data['whatsapp_number']
-        
-        if User.objects.filter(whatsapp_number=whatsapp_number).exists():
+        referral_code = self.validated_data.get('referral_code', None)
+
+        if CustomUser.objects.filter(whatsapp_number=whatsapp_number).exists():
             raise serializers.ValidationError({
                 'error': _('This WhatsApp number has been taken')
             })
         
-        user = User(
+        user = CustomUser(
             username=username,
             email=email,  # Save None if email is not provided
-            whatsapp_number=whatsapp_number
+            whatsapp_number=whatsapp_number,
+            referral_code=referral_code
         )
         user.set_password(password)
         user.save()
@@ -95,14 +105,14 @@ class RequestOTPSerializer(serializers.Serializer):
 
     def validate_email(self, value):
         """Check if email exists in the system."""
-        if not User.objects.filter(email=value).exists():
+        if not CustomUser.objects.filter(email=value).exists():
             raise serializers.ValidationError(_("No user found with this email address."))
         return value
 
     def save(self):
         """Generate OTP and send via email/SMS."""
         email = self.validated_data["email"]
-        user = User.objects.get(email=email)
+        user = CustomUser.objects.get(email=email)
 
         # Generate a random 6-digit OTP
         otp = "".join(random.choices("0123456789", k=6))
@@ -135,8 +145,8 @@ class VerifyOTPSerializer(serializers.Serializer):
 
         # Find user
         try:
-            user = User.objects.get(email=email)
-        except User.DoesNotExist:
+            user = CustomUser.objects.get(email=email)
+        except CustomUser.DoesNotExist:
             raise serializers.ValidationError(_("User not found."))
 
         # Check OTP
@@ -161,7 +171,7 @@ class VerifyOTPSerializer(serializers.Serializer):
         new_password = self.validated_data["new_password"]
 
         # Find user
-        user = User.objects.get(email=email)
+        user = CustomUser.objects.get(email=email)
         user.set_password(new_password)
         user.save()
 

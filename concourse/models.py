@@ -3,6 +3,9 @@ from django.contrib.auth.models import User
 from datetime import datetime, date
 from django.core.validators import RegexValidator
 from django.conf import settings
+from django.contrib.auth import get_user_model
+
+CustomUser = get_user_model()
 
 # Create your models here.
 
@@ -27,6 +30,12 @@ class Concourse(models.Model):
     application_deadline = models.DateField(blank=True, null=True)
     schoolPicture = models.ImageField(upload_to="concourse/images", blank=True, null=True)
     concourseType = models.ForeignKey(ConcourseTypeField, on_delete=models.CASCADE, related_name="concourses")
+    bonus_value = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0.00,
+        help_text="Bonus value to be awarded to the referrer for this concourse."
+    )
 
     def __str__(self):
         return self.concourseName
@@ -60,7 +69,7 @@ class LatestNews(models.Model):
     
     
 class ConcourseRegistration(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="concourseUser")
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name="concourseUser")
     concourse = models.ForeignKey(Concourse, on_delete=models.CASCADE, related_name="concourse")
     application_date = models.DateTimeField(auto_now_add=True)
     payment_status = models.BooleanField(default=False)
@@ -73,6 +82,14 @@ class ConcourseRegistration(models.Model):
     phoneNumber = models.CharField(
         validators=[phone_regex],  # Wrap the validator in a list
         max_length=10
+    )
+    referrer = models.ForeignKey(
+        CustomUser,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="referrals",
+        help_text="The user who referred this registration."
     )
      
     class Meta:
@@ -178,3 +195,15 @@ class UserQuizResult(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.quiz.title} - {self.score}"
+
+
+class GlobalSettings(models.Model):
+    bonus_percentage = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=10.00,  # Default to 10%
+        help_text="Percentage bonus to be awarded to the referrer based on the concourse price."
+    )
+
+    def __str__(self):
+        return f"Global Settings (Bonus Percentage: {self.bonus_percentage}%)"
