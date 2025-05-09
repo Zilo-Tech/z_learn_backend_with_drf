@@ -303,20 +303,17 @@ class ConcourseRegistrationViewSet(viewsets.ViewSet):
         count = ConcourseRegistration.objects.filter(concourse=concourse, payment_status=True).count()
         return Response({'total_users_enrolled': count}, status=status.HTTP_200_OK)
     
-    @action(detail=False, methods=['get'], url_path='referred-users/(?P<user_id>\d+)')
+    @action(detail=False, methods=['get'], url_path='referred-users')
+    @permission_classes([IsAuthenticated])  # Ensure the user is authenticated
     @extend_schema(
-        description="List all users who have paid using the specified user as a referral.",
+        description="List all users who have paid using the authenticated user as a referral.",
         responses={
             200: ConcourseRegistrationSerializer(many=True),
-            400: OpenApiResponse(response={"error": "Invalid user ID."}, description="Invalid user ID."),
+            403: OpenApiResponse(response={"error": "You are not authorized to view this information."}, description="You are not authorized to view this information."),
         }
     )
-    def referred_users(self, request, user_id=None):
-        try:
-            user = CustomUser.objects.get(id=user_id)
-        except CustomUser.DoesNotExist:
-            return Response({"error": "Invalid user ID."}, status=status.HTTP_400_BAD_REQUEST)
-
+    def referred_users(self, request):
+        user = request.user  # Use the authenticated user
         referred_registrations = ConcourseRegistration.objects.filter(referrer=user, payment_status=True)
         serializer = ConcourseRegistrationSerializer(referred_registrations, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)

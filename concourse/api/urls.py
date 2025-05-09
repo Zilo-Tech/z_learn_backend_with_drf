@@ -82,5 +82,5 @@ urlpatterns = [
     path('<int:concourse_id>/solution-guides/', ConcourseSolutionGuideListView.as_view(), name='concourse-solution-guides'),
     path('<int:concourse_id>/solution-guides/<int:guide_id>/', ConcourseSolutionGuideDetailView.as_view(), name='concourse-solution-guide-detail'),
 
-    path('referred-users/<int:user_id>/', ConcourseRegistrationViewSet.as_view({'get': 'referred_users'}), name='referred_users'),
+    path('referred-users/', ConcourseRegistrationViewSet.as_view({'get': 'referred_users'}), name='referred_users'),
 ]
