@@ -27,7 +27,7 @@ class UserSerializer(serializers.ModelSerializer):
         
     def validate_username(self, value):
         # Allow letters, numbers, spaces, and certain special characters in the username
-        if not re.match(r'^[\w.@+-\s]+$', value):
+        if not re.match(r'^[\w.@+\s\-]+$', value):
             raise serializers.ValidationError(
                 _('Enter a valid username. This value may contain only letters, numbers, and @/./+/-/_ characters.')
             )
