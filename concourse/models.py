@@ -4,6 +4,7 @@ from datetime import datetime, date
 from django.core.validators import RegexValidator
 from django.conf import settings
 from django.contrib.auth import get_user_model
+import logging
 
 CustomUser = get_user_model()
 
@@ -98,7 +99,12 @@ class ConcourseRegistration(models.Model):
     def __str__(self):
         return f"{self.user.username} - {self.concourse.concourseName}"
 
-
+    def save(self, *args, **kwargs):
+        if self.referrer:
+            logging.info(f"Setting referrer for user {self.user.username} to {self.referrer.username}")
+        else:
+            logging.info(f"No referrer set for user {self.user.username}")
+        super().save(*args, **kwargs)
 
 
 class ConcoursePastPapers(models.Model):
