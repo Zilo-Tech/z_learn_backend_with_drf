@@ -23,6 +23,9 @@ import io
 import json
 from rest_framework.parsers import MultiPartParser, JSONParser
 from django.contrib.auth import get_user_model
+import logging
+
+logger = logging.getLogger(__name__)
 
 CustomUser = get_user_model()
 
@@ -314,7 +317,16 @@ class ConcourseRegistrationViewSet(viewsets.ViewSet):
     )
     def referred_users(self, request):
         user = request.user  # Use the authenticated user
+        logger.info(f"Fetching referred users for user: {user.username} (ID: {user.id})")
+
+        # Query the referred users
         referred_registrations = ConcourseRegistration.objects.filter(referrer=user, payment_status=True)
+        logger.info(f"Query returned {referred_registrations.count()} referred users.")
+
+        # Log detailed information about the referred users
+        for registration in referred_registrations:
+            logger.info(f"Referred User: {registration.user.username}, Concourse: {registration.concourse.concourseName}, Payment Status: {registration.payment_status}")
+
         serializer = ConcourseRegistrationSerializer(referred_registrations, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
     

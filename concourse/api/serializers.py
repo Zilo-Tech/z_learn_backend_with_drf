@@ -25,9 +25,9 @@ class ConcourseRegistrationSerializer(serializers.ModelSerializer):
         if value:
             try:
                 referrer = CustomUser.objects.get(whatsapp_number=value)
+                return referrer
             except CustomUser.DoesNotExist:
                 raise serializers.ValidationError("Invalid referral code. No user found with this WhatsApp number.")
-            return referrer
         return None
 
     def create(self, validated_data):
