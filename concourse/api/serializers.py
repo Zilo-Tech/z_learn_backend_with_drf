@@ -15,25 +15,36 @@ class ConcourseRegistrationSerializer(serializers.ModelSerializer):
     concourse = serializers.StringRelatedField(read_only=True)
     payment_service = serializers.ChoiceField(choices=[('MTN', 'MTN'), ('ORANGE', 'ORANGE')], write_only=True)
     referrer_code = serializers.CharField(write_only=True, required=False, help_text="WhatsApp number of the referrer")
+    bonus_received = serializers.SerializerMethodField(read_only=True)  # Add bonus_received field
 
     class Meta: 
         model = ConcourseRegistration
-        fields = ["phoneNumber", "user", "concourse", "payment_service", "id", "referrer_code"]
-        read_only_fields = ['concourse', 'user']
+        fields = ["phoneNumber", "user", "concourse", "payment_service", "id", "referrer_code", "bonus_received"]
+        read_only_fields = ['concourse', 'user', 'bonus_received']
     
+    def get_bonus_received(self, obj):
+        """
+        Calculate the bonus received for the referrer based on the concourse price.
+        """
+        if obj.referrer:
+            global_settings = GlobalSettings.objects.first()
+            bonus_percentage = global_settings.bonus_percentage if global_settings else 10.00  # Default to 10%
+            return (bonus_percentage / 100) * obj.concourse.price
+        return 0.00
+
     def validate_referrer_code(self, value):
         if value:
             try:
                 referrer = CustomUser.objects.get(whatsapp_number=value)
-                return referrer
+                return referrer  # Return the referrer object
             except CustomUser.DoesNotExist:
                 raise serializers.ValidationError("Invalid referral code. No user found with this WhatsApp number.")
         return None
 
     def create(self, validated_data):
-        referrer = validated_data.pop('referrer_code', None)
+        referrer = validated_data.pop('referrer_code', None)  # Extract the referrer_code
         if referrer:
-            validated_data['referrer'] = referrer
+            validated_data['referrer'] = referrer  # Set the referrer field
         return super().create(validated_data)
 
 class ConcourseDepartmentSerializer(serializers.ModelSerializer):
