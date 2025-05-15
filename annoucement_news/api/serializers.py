@@ -1,6 +1,5 @@
 from rest_framework import serializers
-from annoucement_news.models import Notification, NotificationReadStatus, MessageToStudents, Device, PushNotification
-
+from annoucement_news.models import Notification, NotificationReadStatus, MessageToStudents
 
 class NotificationReadStatusSerializer(serializers.ModelSerializer):
     is_read = serializers.BooleanField()
@@ -32,12 +31,12 @@ class MessageToStudentsSerializer(serializers.ModelSerializer):
         
         
 
-class DeviceSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Device
-        fields = ['id', 'user', 'device_token', 'device_type', 'last_active']
+# class DeviceSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = Device
+#         fields = ['id', 'user', 'device_token', 'device_type', 'last_active']
 
-class PushNotificationSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Notification
-        fields = ['id', 'user', 'title', 'message', 'created_at']
+# class PushNotificationSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = Notification
+#         fields = ['id', 'user', 'title', 'message', 'created_at']

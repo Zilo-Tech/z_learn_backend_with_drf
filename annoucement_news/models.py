@@ -45,20 +45,20 @@ class MessageToStudents(models.Model):
     
 
 
-class Device(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    device_token = models.CharField(max_length=255, unique=True)  # Expo push token or FCM token
-    device_type = models.CharField(max_length=10, choices=[('android', 'Android'), ('ios', 'iOS')])
-    last_active = models.DateTimeField(auto_now=True)
+# class Device(models.Model):
+#     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+#     device_token = models.CharField(max_length=255, unique=True)  # Expo push token or FCM token
+#     device_type = models.CharField(max_length=10, choices=[('android', 'Android'), ('ios', 'iOS')])
+#     last_active = models.DateTimeField(auto_now=True)
 
-    def __str__(self):
-        return f"{self.user.username} - {self.device_type}"
+#     def __str__(self):
+#         return f"{self.user.username} - {self.device_type}"
 
-class PushNotification(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    title = models.CharField(max_length=255)
-    message = models.TextField()
-    created_at = models.DateTimeField(auto_now_add=True)
+# class PushNotification(models.Model):
+#     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+#     title = models.CharField(max_length=255)
+#     message = models.TextField()
+#     created_at = models.DateTimeField(auto_now_add=True)
 
-    def __str__(self):
-        return f"Notification({self.title}) for {self.user.username}"
+#     def __str__(self):
+#         return f"Notification({self.title}) for {self.user.username}"
