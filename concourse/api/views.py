@@ -54,6 +54,10 @@ class ConcourseViewSet(viewsets.GenericViewSet):
         description="List all active concourses.",
         responses={200: ConcourseSerializer(many=True)},
     )
+    
+    def get_queryset(self):
+        return Concourse.objects.all()
+    
     def list(self, request):
         queryset = Concourse.objects.filter(is_active=True)
         queryset = self.filter_queryset(queryset)  # Apply the filters from request
