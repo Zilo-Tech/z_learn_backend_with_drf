@@ -1,3 +1,4 @@
+import re
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from django.utils.translation import gettext_lazy as _
@@ -25,7 +26,7 @@ class UserSerializer(serializers.ModelSerializer):
         
     def validate_username(self, value):
         # Allow letters, numbers, spaces, and certain special characters in the username
-        if not re.match(r'^[\w.@+-\s]+$', value):
+        if not re.match(r'^[\w.@+\s-]+$', value):  # Move '-' to the end or escape it
             raise serializers.ValidationError(
                 _('Enter a valid username. This value may contain only letters, numbers, and @/./+/-/_ characters.')
             )
@@ -42,6 +43,7 @@ class UserSerializer(serializers.ModelSerializer):
         # Validate referral_code if provided
         referral_code = data.get('referral_code')
         if referral_code:
+            # Only check that the whatsapp_number exists, do not check for uniqueness or previous referrals
             if not CustomUser.objects.filter(whatsapp_number=referral_code).exists():
                 raise serializers.ValidationError({
                     'referral_code': _('Invalid referral code. No user found with this WhatsApp number.')

@@ -229,7 +229,6 @@ class ConcourseRegistrationViewSet(viewsets.ViewSet):
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
-        # Interacting with the payment gateway
         phone_number = serializer.validated_data.get('phoneNumber')
         payment_service = serializer.validated_data.get('payment_service')
         payment_results = make_payment(application_key, access_key, secret_key, amount=concourse.price, service=payment_service, payer=phone_number, trxID='1')
@@ -237,22 +236,33 @@ class ConcourseRegistrationViewSet(viewsets.ViewSet):
         if not payment_results["Operation Success"] or not payment_results["Transaction Success"]:
             return Response({'error': 'Payment failed. Registration is not completed'}, status=status.HTTP_400_BAD_REQUEST)
         
-        # Save the registration details
-        registration = serializer.save(concourse=concourse, user=request.user, payment_status=True)
-
-        # Calculate and allocate bonus
-        global_settings = GlobalSettings.objects.first()
-        bonus_percentage = global_settings.bonus_percentage if global_settings else 10.00  # Default to 10%
-        bonus_amount = (bonus_percentage / 100) * concourse.price
-
-        referrer_code = request.data.get('referrer_code')
+        # Get referrer user object if referral code is provided
+        referrer = None
+        # Prefer explicit referrer_code from request, else fallback to user's referral_code
+        referrer_code = request.data.get('referrer_code') or getattr(request.user, 'referral_code', None)
         if referrer_code:
             try:
                 referrer = CustomUser.objects.get(whatsapp_number=referrer_code)
-                referrer.bonus_balance += bonus_amount
-                referrer.save()
             except CustomUser.DoesNotExist:
-                pass  # Ignore if the referrer does not exist
+                referrer = None
+
+        registration = serializer.save(
+            concourse=concourse,
+            user=request.user,
+            payment_status=True,
+            referrer=referrer  # This is the actual user object or None
+        )
+
+        # Allocate bonus
+        global_settings = GlobalSettings.objects.first()
+        bonus_percentage = global_settings.bonus_percentage if global_settings else 10.00
+        bonus_amount = (bonus_percentage / 100) * concourse.price
+
+        if referrer:
+            logger.info(f"Adding bonus {bonus_amount} to {referrer.username} (old balance: {referrer.bonus_balance})")
+            referrer.bonus_balance += bonus_amount
+            referrer.save()
+            logger.info(f"New balance: {referrer.bonus_balance}")
 
         return Response(ConcourseRegistrationSerializer(registration).data, status=status.HTTP_201_CREATED)
     
