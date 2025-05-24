@@ -43,11 +43,9 @@ class UserSerializer(serializers.ModelSerializer):
         # Validate referral_code if provided
         referral_code = data.get('referral_code')
         if referral_code:
-            # Only check that the whatsapp_number exists, do not check for uniqueness or previous referrals
+            # If the whatsapp_number does not exist, just ignore and set to None
             if not CustomUser.objects.filter(whatsapp_number=referral_code).exists():
-                raise serializers.ValidationError({
-                    'referral_code': _('Invalid referral code. No user found with this WhatsApp number.')
-                })
+                data['referral_code'] = None
 
         return data
     
