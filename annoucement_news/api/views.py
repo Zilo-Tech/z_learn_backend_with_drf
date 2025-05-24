@@ -30,7 +30,8 @@ class NotificationViewSet(viewsets.ModelViewSet):
     
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
-        
+    
+    
         
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
     def mark_as_read(self, request, pk=None):
@@ -55,3 +56,4 @@ class MessageToStudentsViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAdminOrReadOnly]    
     serializer_class = MessageToStudentsSerializer
     queryset = MessageToStudents.objects.all().order_by('-date_created')
+
