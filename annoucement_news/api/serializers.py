@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from annoucement_news.models import Notification, NotificationReadStatus, MessageToStudents
+from annoucement_news.models import Notification, NotificationReadStatus, MessageToStudents, YouTubeChannel
 
 class NotificationReadStatusSerializer(serializers.ModelSerializer):
     is_read = serializers.BooleanField()
@@ -29,7 +29,14 @@ class MessageToStudentsSerializer(serializers.ModelSerializer):
         model = MessageToStudents
         fields = "__all__"
         
-        
+    
+
+
+class YouTubeChannelSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = YouTubeChannel
+        fields = "__all__"
+            
 
 # class DeviceSerializer(serializers.ModelSerializer):
 #     class Meta:

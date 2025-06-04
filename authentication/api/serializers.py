@@ -7,6 +7,7 @@ import re
 
 CustomUser = get_user_model()
 
+
 class UserSerializer(serializers.ModelSerializer):
     password2 = serializers.CharField(
         style={'input_type': 'password'},
@@ -24,7 +25,7 @@ class UserSerializer(serializers.ModelSerializer):
                 'write_only': True
             }
         }
-        
+
     def validate_username(self, value):
         # Allow letters, numbers, spaces, and certain special characters in the username
         if not re.match(r'^[\w.@+\s\-]+$', value):
@@ -32,8 +33,7 @@ class UserSerializer(serializers.ModelSerializer):
                 _('Enter a valid username. This value may contain only letters, numbers, and @/./+/-/_ characters.')
             )
         return value
-    
-    
+
     def validate(self, data):
         # Validate password match
         if data['password'] != data['password2']:
@@ -50,7 +50,7 @@ class UserSerializer(serializers.ModelSerializer):
                 })
 
         return data
-    
+
     def save(self):
         password = self.validated_data['password']
         self.validated_data.pop('password2')
@@ -63,18 +63,27 @@ class UserSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({
                 'error': _('This WhatsApp number has been taken')
             })
-        
+
         user = CustomUser(
             username=username,
             email=email,  # Save None if email is not provided
             whatsapp_number=whatsapp_number,
-            referral_code=referral_code
         )
         user.set_password(password)
         user.save()
-        return user
 
-    
+        # Handle referral logic
+        if referral_code:
+            try:
+                referrer = CustomUser.objects.get(whatsapp_number=referral_code)
+                Referral.objects.create(referrer=referrer, referred_user=user)
+            except CustomUser.DoesNotExist:
+                raise serializers.ValidationError({
+                    'referral_code': _('Invalid referral code. No user found with this WhatsApp number.')
+                })
+
+        return user
+        
 class PasswordChangedSerializer(serializers.Serializer):
     old_password = serializers.CharField(required=True, write_only=True)
     new_password = serializers.CharField(required=True, write_only=True)

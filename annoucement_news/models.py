@@ -42,7 +42,14 @@ class MessageToStudents(models.Model):
         return self.title
     
     
-    
+
+
+class YouTubeChannel(models.Model):
+    name = models.CharField(max_length=100)
+    link = models.URLField()
+
+    def __str__(self):
+        return self.name    
 
 
 # class Device(models.Model):
@@ -62,3 +69,5 @@ class MessageToStudents(models.Model):
 
 #     def __str__(self):
 #         return f"Notification({self.title}) for {self.user.username}"
+
+

@@ -8,8 +8,8 @@ from rest_framework import viewsets
 from rest_framework.decorators import action, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from drf_yasg.utils import swagger_auto_schema
-from .serializers import NotificationSerializer, MessageToStudentsSerializer
-from annoucement_news.models import Notification, NotificationReadStatus, MessageToStudents
+from .serializers import NotificationSerializer, MessageToStudentsSerializer, YouTubeChannelSerializer
+from annoucement_news.models import Notification, NotificationReadStatus, MessageToStudents, YouTubeChannel
 from .permissions import IsAdminOrReadOnly
 from rest_framework.pagination import LimitOffsetPagination
 from .pagination import LargeResultsSetPagination
@@ -57,3 +57,9 @@ class MessageToStudentsViewSet(viewsets.ModelViewSet):
     serializer_class = MessageToStudentsSerializer
     queryset = MessageToStudents.objects.all().order_by('-date_created')
 
+
+
+
+class YouTubeChannelViewSet(viewsets.ModelViewSet):
+    queryset = YouTubeChannel.objects.all()
+    serializer_class = YouTubeChannelSerializer

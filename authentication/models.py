@@ -47,3 +47,22 @@ class CustomUser(AbstractUser):
         help_text='Specific permissions for this user.',
         related_query_name='customuser',
     )
+    
+    
+class Referral(models.Model):
+    referrer = models.ForeignKey(
+        CustomUser,
+        on_delete=models.CASCADE,
+        related_name="referral_set",  # Unique related_name
+        help_text="The user who referred others."
+    )
+    referred_user = models.OneToOneField(
+        CustomUser,
+        on_delete=models.CASCADE,
+        related_name="referred_by",
+        help_text="The user who was referred."
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.referred_user.username} referred by {self.referrer.username}"

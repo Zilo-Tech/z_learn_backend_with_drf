@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import CustomUser
+from .models import CustomUser, Referral
 
 class CustomUserAdmin(UserAdmin):
     model = CustomUser
@@ -14,3 +14,4 @@ class CustomUserAdmin(UserAdmin):
     search_fields = ['username', 'email', 'whatsapp_number']
 
 admin.site.register(CustomUser, CustomUserAdmin)
+admin.site.register(Referral)

@@ -17,9 +17,72 @@ from .serializers import RequestOTPSerializer, VerifyOTPSerializer
 
 CustomUser = get_user_model()
 
+# class RegisterUser(viewsets.ViewSet):
+#     """This class will allow user to Register a user """
+#     permission_classes([IsAuthenticated]) 
+#     @swagger_auto_schema(
+#         operation_description="Register a new user",
+#         request_body=UserSerializer,
+#         responses={
+#             status.HTTP_201_CREATED: "Registration Successful",
+#             status.HTTP_400_BAD_REQUEST: "Bad Request."
+#         },
+#     )
+#     def create(self, request, format=None):
+#         """ Register or creation of account."""
+#         serializer = UserSerializer(data = request.data)
+#         data = {}
+        
+#         if serializer.is_valid():
+#             account = serializer.save()
+#             data['response'] = 'Registration Successful!'
+#             data['username'] = account.username
+#             data['email'] = account.email
+#             data['whatsapp_number'] = account.whatsapp_number
+             
+#             token = Token.objects.get(user = account).key
+#             data['token'] = token
+#         else:
+#             data = serializer.errors
+#         return Response(data)
+    
+#     @swagger_auto_schema(
+#         operation_description="Logout the user by deleting thier token",
+#         responses={
+#             status.HTTP_204_NO_CONTENT: "Token deleted successfully",
+#             status.HTTP_403_FORBIDDEN: "User is not authenticated"
+#         }
+#     )
+#     @action(detail=False, methods=['post'])
+#     def delete_token(self, request):
+#         """Logout a user by deleting his/her token."""
+#         if request.user.is_authenticated:
+#             request.user.auth_token.delete()
+#             return Response({'detail': 'Token deleted successfully.'}, status=status.HTTP_204_NO_CONTENT)
+#         return Response({'detail': 'User is not authenticated.'}, status=status.HTTP_403_FORBIDDEN)
+    
+    
+#     @swagger_auto_schema(
+#         operation_description="Change user password",
+#         response={
+#             status.HTTP_200_OK: "Password changed successfully",
+#             status.HTTP_400_BAD_REQUEST: "Bad Request."
+#         }
+#     )
+#     @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
+#     def change_password(self, request):
+#         serializer = PasswordChangedSerializer(data=request.data, context={'request': request})
+#         if serializer.is_valid():
+#             user = serializer.save()
+#             return Response({'detail': 'Password changed successfully'}, status = status.HTTP_200_OK)
+#         return Response(serializer.errors, status = status.HTTP_400_BAD_REQUEST)
+    
+    
+
 class RegisterUser(viewsets.ViewSet):
-    """This class will allow user to Register a user """
-    permission_classes([IsAuthenticated]) 
+    """This class will allow users to register."""
+    permission_classes = []  # Remove `IsAuthenticated` for registration
+
     @swagger_auto_schema(
         operation_description="Register a new user",
         request_body=UserSerializer,
@@ -29,25 +92,41 @@ class RegisterUser(viewsets.ViewSet):
         },
     )
     def create(self, request, format=None):
-        """ Register or creation of account."""
-        serializer = UserSerializer(data = request.data)
+        """Register or create an account."""
+        serializer = UserSerializer(data=request.data)
         data = {}
-        
+
         if serializer.is_valid():
             account = serializer.save()
             data['response'] = 'Registration Successful!'
             data['username'] = account.username
             data['email'] = account.email
             data['whatsapp_number'] = account.whatsapp_number
-             
-            token = Token.objects.get(user = account).key
+
+            # Handle referral logic
+            referral_code = request.data.get('referral_code')
+            if referral_code:
+                try:
+                    referrer = CustomUser.objects.get(whatsapp_number=referral_code)
+                    Referral.objects.create(referrer=referrer, referred_user=account)
+                    # Optionally, update the referrer's bonus balance
+                    referrer.bonus_balance += 10.00  # Example: Add $10 bonus
+                    referrer.save()
+                except CustomUser.DoesNotExist:
+                    return Response(
+                        {"error": "Invalid referral code. No user found with this WhatsApp number."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
+            # Generate token for the new user
+            token = Token.objects.get(user=account).key
             data['token'] = token
         else:
             data = serializer.errors
         return Response(data)
-    
+
     @swagger_auto_schema(
-        operation_description="Logout the user by deleting thier token",
+        operation_description="Logout the user by deleting their token",
         responses={
             status.HTTP_204_NO_CONTENT: "Token deleted successfully",
             status.HTTP_403_FORBIDDEN: "User is not authenticated"
@@ -55,13 +134,12 @@ class RegisterUser(viewsets.ViewSet):
     )
     @action(detail=False, methods=['post'])
     def delete_token(self, request):
-        """Logout a user by deleting his/her token."""
+        """Logout a user by deleting their token."""
         if request.user.is_authenticated:
             request.user.auth_token.delete()
             return Response({'detail': 'Token deleted successfully.'}, status=status.HTTP_204_NO_CONTENT)
         return Response({'detail': 'User is not authenticated.'}, status=status.HTTP_403_FORBIDDEN)
-    
-    
+
     @swagger_auto_schema(
         operation_description="Change user password",
         response={
@@ -74,11 +152,8 @@ class RegisterUser(viewsets.ViewSet):
         serializer = PasswordChangedSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
             user = serializer.save()
-            return Response({'detail': 'Password changed successfully'}, status = status.HTTP_200_OK)
-        return Response(serializer.errors, status = status.HTTP_400_BAD_REQUEST)
-    
-    
-    
+            return Response({'detail': 'Password changed successfully'}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)  
 
 class CustomAuthToken(ObtainAuthToken):
     """This class will allow user to login """
