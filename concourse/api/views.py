@@ -1,5 +1,5 @@
 from .serializers import (LatestNewsSerializer, ConcourseDepartmentSerializer,
-                          ConcourseSerializer, ConcourseRegistrationSerializer, ConcourseTypeFieldSerializer, ConcoursePastPapersSerializer,ConcourseResourceSerializer,ConcourseSolutionGuideSerializer, QuizSerializer, UserQuizResultSerializer, WithdrawalSerializer)
+                          ConcourseSerializer, ConcourseRegistrationSerializer, ConcourseTypeFieldSerializer, ConcoursePastPapersSerializer,ConcourseResourceSerializer,ConcourseSolutionGuideSerializer, QuizSerializer, UserQuizResultSerializer, WithdrawalSerializer, GlobalSettingsSerializer)
 
 from concourse.models import (Concourse, ConcourseDepartment, LatestNews,ConcourseResource,
                               ConcourseRegistration, ConcourseTypeField, ConcoursePastPapers,ConcourseSolutionGuide, Quiz, Question, UserQuizResult, GlobalSettings, Withdrawal)
@@ -25,7 +25,8 @@ from rest_framework.parsers import MultiPartParser, JSONParser
 from django.contrib.auth import get_user_model
 import logging
 from decimal import Decimal
-from pymesomb.operations.payment import PaymentOperation  # Adjust import as needed
+from pymesomb.operations import PaymentOperation
+from django.db import models
 
 logger = logging.getLogger(__name__)
 
@@ -344,7 +345,20 @@ class ConcourseRegistrationViewSet(viewsets.ViewSet):
             logger.info(f"Referred User: {registration.user.username}, Concourse: {registration.concourse.concourseName}, Payment Status: {registration.payment_status}")
 
         serializer = ConcourseRegistrationSerializer(referred_registrations, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+
+        # Add referral summary for the current user
+        total_withdrawn = user.withdrawals.filter(status='completed').aggregate(
+            total=models.Sum('amount')
+        )['total'] or 0.00
+        available_balance = getattr(user, 'bonus_balance', 0.00)
+
+        return Response({
+            "results": serializer.data,
+            "referral_summary": {
+                "available_balance": available_balance,
+                "total_withdrawn": total_withdrawn
+            }
+        }, status=status.HTTP_200_OK)
     
 
 class ConcoursePastPapersView(generics.ListAPIView):
@@ -587,15 +601,16 @@ class WithdrawalView(APIView):
             )
             trx_id = f"withdraw-{user.id}-{Withdrawal.objects.count()+1}"
             resp = payment.make_deposit(
-                amount=float(amount),
+                amount=float(amount), 
                 service=service,
                 receiver=phone_number,
                 trx_id=trx_id
             )
-            success = resp.isOperationSuccess() and resp.isTransactionSuccess()
+            # Updated for latest pymesomb response
+            success = getattr(resp, "success", False)
             status_str = 'completed' if success else 'failed'
-            response_message = str(resp.getMessage())
-            transaction_id = resp.getTransactionID() if hasattr(resp, 'getTransactionID') else None
+            response_message = getattr(resp, "message", str(resp))
+            transaction_id = getattr(resp, "transaction_id", None)
         except Exception as e:
             status_str = 'failed'
             response_message = str(e)
@@ -619,9 +634,28 @@ class WithdrawalView(APIView):
         serializer = WithdrawalSerializer(withdrawal)
         return Response(serializer.data, status=status.HTTP_201_CREATED if success else status.HTTP_400_BAD_REQUEST)
 
-class WithdrawalListView(ListAPIView):
+class WithdrawalListView(generics.ListAPIView):
     serializer_class = WithdrawalSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         return Withdrawal.objects.filter(user=self.request.user).order_by('-created_at')
+
+class GlobalSettingsVideoView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        settings = GlobalSettings.objects.first()
+        serializer = GlobalSettingsSerializer(settings)
+        return Response(serializer.data)
+
+    def put(self, request):
+        settings = GlobalSettings.objects.first()
+        if not settings:
+            return Response({"detail": "GlobalSettings not found."}, status=status.HTTP_404_NOT_FOUND)
+        self.check_permissions(request)
+        serializer = GlobalSettingsSerializer(settings, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

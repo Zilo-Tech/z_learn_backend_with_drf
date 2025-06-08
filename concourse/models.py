@@ -211,6 +211,9 @@ class GlobalSettings(models.Model):
         default=10.00,  # Default to 10%
         help_text="Percentage bonus to be awarded to the referrer based on the concourse price."
     )
+    video_title = models.CharField(max_length=255, blank=True, null=True)
+    video_description = models.TextField(blank=True, null=True)
+    video_link = models.URLField(blank=True, null=True)
 
     def __str__(self):
         return f"Global Settings (Bonus Percentage: {self.bonus_percentage}%)"
