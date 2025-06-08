@@ -1,7 +1,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import (LatestNewsViewSet, ConcourseViewSet, LatestNewsViewSet, 
-                    ConcourseDepartmentViewSet,ConcourseResourceListView, ConcourseTypeFieldViewSet, ConcourseRegistrationViewSet, ConcoursePastPapersView,ConcoursePastPaperDetailView, ConcourseSolutionGuideListView, ConcourseSolutionGuideDetailView, ConcourseSolutionGuideViewSet, QuizViewSet)
+                    ConcourseDepartmentViewSet,ConcourseResourceListView, ConcourseTypeFieldViewSet, ConcourseRegistrationViewSet, ConcoursePastPapersView,ConcoursePastPaperDetailView, ConcourseSolutionGuideListView, ConcourseSolutionGuideDetailView, ConcourseSolutionGuideViewSet, QuizViewSet, WithdrawalView, WithdrawalListView)
 
 router = DefaultRouter()
 # router.register(r'latest_news', LatestNewsViewSet, basename='latest_news')
@@ -83,4 +83,6 @@ urlpatterns = [
     path('<int:concourse_id>/solution-guides/<int:guide_id>/', ConcourseSolutionGuideDetailView.as_view(), name='concourse-solution-guide-detail'),
 
     path('referred-users/', ConcourseRegistrationViewSet.as_view({'get': 'referred_users'}), name='referred_users'),
+    path('withdrawals/', WithdrawalView.as_view(), name='withdrawal-create'),
+    path('withdrawals/history/', WithdrawalListView.as_view(), name='withdrawal-list'),
 ]

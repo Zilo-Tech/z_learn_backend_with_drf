@@ -5,6 +5,7 @@ from django.core.validators import RegexValidator
 from django.conf import settings
 from django.contrib.auth import get_user_model
 import logging
+from decimal import Decimal
 
 CustomUser = get_user_model()
 
@@ -213,3 +214,22 @@ class GlobalSettings(models.Model):
 
     def __str__(self):
         return f"Global Settings (Bonus Percentage: {self.bonus_percentage}%)"
+
+
+class Withdrawal(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('completed', 'Completed'),
+        ('failed', 'Failed'),
+    ]
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='withdrawals')
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    service = models.CharField(max_length=20, choices=[('MTN', 'MTN'), ('ORANGE', 'ORANGE')])
+    phone_number = models.CharField(max_length=15)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
+    created_at = models.DateTimeField(auto_now_add=True)
+    transaction_id = models.CharField(max_length=100, blank=True, null=True)
+    response_message = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.user.username} - {self.amount} - {self.status}"

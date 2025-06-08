@@ -1,4 +1,4 @@
-from concourse.models import Concourse, ConcourseResource, ConcourseDepartment, LatestNews, ConcourseRegistration, ConcourseTypeField, ConcoursePastPapers, ConcourseSolutionGuide, Quiz, Question, UserQuizResult, GlobalSettings
+from concourse.models import Concourse, ConcourseResource, ConcourseDepartment, LatestNews, ConcourseRegistration, ConcourseTypeField, ConcoursePastPapers, ConcourseSolutionGuide, Quiz, Question, UserQuizResult, GlobalSettings, Withdrawal
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 
@@ -143,3 +143,11 @@ class GlobalSettingsSerializer(serializers.ModelSerializer):
     class Meta:
         model = GlobalSettings
         fields = ['bonus_percentage']
+
+class WithdrawalSerializer(serializers.ModelSerializer):
+    user = serializers.StringRelatedField(read_only=True)
+
+    class Meta:
+        model = Withdrawal
+        fields = ['id', 'user', 'amount', 'service', 'phone_number', 'status', 'created_at', 'transaction_id', 'response_message']
+        read_only_fields = ['user', 'status', 'created_at', 'transaction_id', 'response_message']
