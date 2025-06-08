@@ -1,8 +1,8 @@
 from .serializers import (LatestNewsSerializer, ConcourseDepartmentSerializer,
-                          ConcourseSerializer, ConcourseRegistrationSerializer, ConcourseTypeFieldSerializer, ConcoursePastPapersSerializer,ConcourseResourceSerializer,ConcourseSolutionGuideSerializer, QuizSerializer, UserQuizResultSerializer)
+                          ConcourseSerializer, ConcourseRegistrationSerializer, ConcourseTypeFieldSerializer, ConcoursePastPapersSerializer,ConcourseResourceSerializer,ConcourseSolutionGuideSerializer, QuizSerializer, UserQuizResultSerializer, WithdrawalSerializer, GlobalSettingsSerializer)
 
 from concourse.models import (Concourse, ConcourseDepartment, LatestNews,ConcourseResource,
-                              ConcourseRegistration, ConcourseTypeField, ConcoursePastPapers,ConcourseSolutionGuide, Quiz, Question, UserQuizResult, GlobalSettings)
+                              ConcourseRegistration, ConcourseTypeField, ConcoursePastPapers,ConcourseSolutionGuide, Quiz, Question, UserQuizResult, GlobalSettings, Withdrawal)
 
 from django.shortcuts import get_object_or_404
 from rest_framework import viewsets
@@ -24,6 +24,9 @@ import json
 from rest_framework.parsers import MultiPartParser, JSONParser
 from django.contrib.auth import get_user_model
 import logging
+from decimal import Decimal
+from pymesomb.operations import PaymentOperation
+from django.db import models
 
 logger = logging.getLogger(__name__)
 
@@ -342,7 +345,20 @@ class ConcourseRegistrationViewSet(viewsets.ViewSet):
             logger.info(f"Referred User: {registration.user.username}, Concourse: {registration.concourse.concourseName}, Payment Status: {registration.payment_status}")
 
         serializer = ConcourseRegistrationSerializer(referred_registrations, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+
+        # Add referral summary for the current user
+        total_withdrawn = user.withdrawals.filter(status='completed').aggregate(
+            total=models.Sum('amount')
+        )['total'] or 0.00
+        available_balance = getattr(user, 'bonus_balance', 0.00)
+
+        return Response({
+            "results": serializer.data,
+            "referral_summary": {
+                "available_balance": available_balance,
+                "total_withdrawn": total_withdrawn
+            }
+        }, status=status.HTTP_200_OK)
     
 
 class ConcoursePastPapersView(generics.ListAPIView):
@@ -558,3 +574,88 @@ class QuizViewSet(viewsets.ModelViewSet):
         results = UserQuizResult.objects.filter(quiz=quiz).order_by("-score")[:10]
         serializer = UserQuizResultSerializer(results, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+class WithdrawalView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    parser_classes = [JSONParser]
+
+    def post(self, request):
+        user = request.user
+        amount = Decimal(request.data.get('amount', 0))
+        service = request.data.get('service')
+        phone_number = request.data.get('phone_number')
+
+        if amount <= 0:
+            return Response({'error': 'Invalid withdrawal amount.'}, status=status.HTTP_400_BAD_REQUEST)
+        if not service or not phone_number:
+            return Response({'error': 'Service and phone number are required.'}, status=status.HTTP_400_BAD_REQUEST)
+        if amount > user.bonus_balance:
+            return Response({'error': 'Insufficient bonus balance.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Call MeSomb deposit API
+        try:
+            payment = PaymentOperation(
+                application_key=application_key,
+                access_key=access_key,
+                secret_key=secret_key
+            )
+            trx_id = f"withdraw-{user.id}-{Withdrawal.objects.count()+1}"
+            resp = payment.make_deposit(
+                amount=float(amount), 
+                service=service,
+                receiver=phone_number,
+                trx_id=trx_id
+            )
+            # Updated for latest pymesomb response
+            success = getattr(resp, "success", False)
+            status_str = 'completed' if success else 'failed'
+            response_message = getattr(resp, "message", str(resp))
+            transaction_id = getattr(resp, "transaction_id", None)
+        except Exception as e:
+            status_str = 'failed'
+            response_message = str(e)
+            transaction_id = None
+            success = False
+
+        withdrawal = Withdrawal.objects.create(
+            user=user,
+            amount=amount,
+            service=service,
+            phone_number=phone_number,
+            status=status_str,
+            transaction_id=transaction_id,
+            response_message=response_message
+        )
+
+        if success:
+            user.bonus_balance -= amount
+            user.save()
+
+        serializer = WithdrawalSerializer(withdrawal)
+        return Response(serializer.data, status=status.HTTP_201_CREATED if success else status.HTTP_400_BAD_REQUEST)
+
+class WithdrawalListView(generics.ListAPIView):
+    serializer_class = WithdrawalSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Withdrawal.objects.filter(user=self.request.user).order_by('-created_at')
+
+class GlobalSettingsVideoView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        settings = GlobalSettings.objects.first()
+        serializer = GlobalSettingsSerializer(settings)
+        return Response(serializer.data)
+
+    def put(self, request):
+        settings = GlobalSettings.objects.first()
+        if not settings:
+            return Response({"detail": "GlobalSettings not found."}, status=status.HTTP_404_NOT_FOUND)
+        self.check_permissions(request)
+        serializer = GlobalSettingsSerializer(settings, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

@@ -1,6 +1,7 @@
-from concourse.models import Concourse, ConcourseResource, ConcourseDepartment, LatestNews, ConcourseRegistration, ConcourseTypeField, ConcoursePastPapers, ConcourseSolutionGuide, Quiz, Question, UserQuizResult, GlobalSettings
+from concourse.models import Concourse, ConcourseResource, ConcourseDepartment, LatestNews, ConcourseRegistration, ConcourseTypeField, ConcoursePastPapers, ConcourseSolutionGuide, Quiz, Question, UserQuizResult, GlobalSettings, Withdrawal
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
+from django.db import models
 
 CustomUser = get_user_model()
 
@@ -19,8 +20,13 @@ class ConcourseRegistrationSerializer(serializers.ModelSerializer):
 
     class Meta: 
         model = ConcourseRegistration
-        fields = ["phoneNumber", "user", "concourse", "payment_service", "id", "referrer_code", "bonus_received"]
-        read_only_fields = ['concourse', 'user', 'bonus_received']
+        fields = [
+            "phoneNumber", "user", "concourse", "payment_service", "id",
+            "referrer_code", "bonus_received"
+        ]
+        read_only_fields = [
+            'concourse', 'user', 'bonus_received'
+        ]
     
     def get_bonus_received(self, obj):
         """
@@ -142,4 +148,17 @@ class UserQuizResultSerializer(serializers.ModelSerializer):
 class GlobalSettingsSerializer(serializers.ModelSerializer):
     class Meta:
         model = GlobalSettings
-        fields = ['bonus_percentage']
+        fields = [
+            'bonus_percentage',
+            'video_title',
+            'video_description',
+            'video_link'
+        ]
+
+class WithdrawalSerializer(serializers.ModelSerializer):
+    user = serializers.StringRelatedField(read_only=True)
+
+    class Meta:
+        model = Withdrawal
+        fields = ['id', 'user', 'amount', 'service', 'phone_number', 'status', 'created_at', 'transaction_id', 'response_message']
+        read_only_fields = ['user', 'status', 'created_at', 'transaction_id', 'response_message']

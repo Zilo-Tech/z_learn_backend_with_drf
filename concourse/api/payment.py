@@ -22,32 +22,29 @@ application_key = "81c6eb7ab02fa9e81bf7e07beb77c949129bcfab"
 
 
 
-def make_payment(application_key, access_key, secret_key, amount, service, payer, trxID):
-    # Initialize the PaymentOperation
-    operation = PaymentOperation(application_key, access_key, secret_key)
+def make_payment(application_key, access_key, secret_key, amount, service, payer, trxID=None):
+    from pymesomb.operations import PaymentOperation
 
-    # Making a collect operation
-    response = operation.make_collect({
-        'amount': amount,
-        'service': service,
-        'payer': payer,
-        'date': datetime.now(),
-        'nonce': RandomGenerator.nonce(),
-        'trxID': trxID
-    })
-
-    # Check if operation and transaction were successful
-    operation_success = response.is_operation_success()
-    transaction_success = response.is_transaction_success()
-
-    results = {
-        "Operation Success": operation_success,
-        "Transaction Success": transaction_success
+    operation = PaymentOperation(
+        application_key=application_key,
+        access_key=access_key,
+        secret_key=secret_key
+    )
+    # Correct usage: positional for amount, service, payer; trx_id as keyword
+    response = operation.make_collect(
+        float(amount),    # amount
+        service,          # service (e.g., "MTN")
+        payer,            # payer (phone number)
+        trx_id=trxID      # transaction ID as keyword argument
+    )
+    # Adapt response parsing as needed for your codebase
+    return {
+        "Operation Success": getattr(response, "success", False),
+        "Transaction Success": getattr(response, "success", False),
+        "message": getattr(response, "message", ""),
+        "transaction_id": getattr(response, "transaction_id", None),
+        "raw": response
     }
-
-    # Print results
-    print(f"The results are {results}")
-    return results
 
     return operation_success, transaction_success
 
