@@ -44,6 +44,7 @@ urlpatterns = [
    path('chat_section/', include('chat_section.api.urls')),
    path('concourse/', include('concourse.api.urls')),
    path('ai/', include('AI.urls')),
+   path('', include('background.urls')),
 ]
 
 if settings.DEBUG:
