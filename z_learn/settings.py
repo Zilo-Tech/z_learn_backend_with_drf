@@ -59,7 +59,6 @@ INSTALLED_APPS = [
     'drf_spectacular',
     'corsheaders',
     'django_filters',
-    'background_task',
    
     'authentication',
     'annoucement_news',
