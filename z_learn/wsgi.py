@@ -14,3 +14,6 @@ from django.core.wsgi import get_wsgi_application
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'z_learn.settings')
 
 application = get_wsgi_application()
+
+from background.scheduler import start_scheduler
+start_scheduler()
