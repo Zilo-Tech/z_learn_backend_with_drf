@@ -1,10 +1,15 @@
+from django.views.decorators.csrf import csrf_protect
 from django.contrib import admin
 from django.shortcuts import redirect
 from django.urls import path
 from django import forms
 from django.http import HttpResponse
+from django.shortcuts import render
+from django.utils.html import format_html
+from django.urls import reverse
 import csv
 import json
+from concourse.api.views import upload_quiz_questions_from_data
 from .models import Quiz, Question, Concourse, ConcourseDepartment, ConcourseResource, LatestNews, ConcourseRegistration, ConcourseTypeField, ConcoursePastPapers, ConcourseSolutionGuide, UserQuizResult, GlobalSettings
 
 # Register your models here.
@@ -29,7 +34,12 @@ class QuestionUploadForm(forms.Form):
 
 @admin.register(Quiz)
 class QuizAdmin(admin.ModelAdmin):
-    list_display = ("title", "duration", "created_date")
+    list_display = ("title", "duration", "created_date", "upload_questions_link")
+    def upload_questions_link(self, obj):
+        url = reverse('admin:upload-questions', args=[obj.id])
+        return format_html('<a class="button" href="{}">Upload Questions</a>', url)
+    upload_questions_link.short_description = "Upload Questions"
+    upload_questions_link.allow_tags = True
     search_fields = ("title",)
     filter_horizontal = ('concourse',)
     list_filter = ("concourse",)
@@ -48,33 +58,21 @@ class QuizAdmin(admin.ModelAdmin):
 
     def upload_questions(self, request, quiz_id):
         quiz = Quiz.objects.get(id=quiz_id)
-        if request.method == "POST":
-            form = QuestionUploadForm(request.POST, request.FILES)
-            if form.is_valid():
-                file = form.cleaned_data["file"]
-                if file.name.endswith(".csv"):
-                    data = csv.DictReader(file.read().decode("utf-8").splitlines())
-                elif file.name.endswith(".json"):
-                    data = json.load(file)
-                else:
-                    self.message_user(request, "Unsupported file format", level="error")
-                    return redirect("..")
-
-                for row in data:
-                    Question.objects.create(
-                        quiz=quiz,
-                        text=row["question"],
-                        option_1=row["option_1"],
-                        option_2=row["option_2"],
-                        option_3=row["option_3"],
-                        option_4=row["option_4"],
-                        correct_option=int(row["correct_option"]),
-                    )
-                self.message_user(request, "Questions uploaded successfully")
+        form = QuestionUploadForm(request.POST or None, request.FILES or None)
+        if request.method == "POST" and form.is_valid():
+            file = form.cleaned_data["file"]
+            if file.name.endswith(".csv"):
+                data = list(csv.DictReader(file.read().decode("utf-8").splitlines()))
+            elif file.name.endswith(".json"):
+                data = json.load(file)
+            else:
+                self.message_user(request, "Unsupported file format", level="error")
                 return redirect("..")
-        else:
-            form = QuestionUploadForm()
 
+            created = upload_quiz_questions_from_data(quiz, data)
+            self.message_user(request, f"Questions uploaded successfully: {created} created")
+            return redirect("..")
+        return render(request, "admin/quiz_upload_questions.html", {"form": form, "quiz": quiz})
         return HttpResponse(
             f"""
             <h1>Upload Questions for {quiz.title}</h1>

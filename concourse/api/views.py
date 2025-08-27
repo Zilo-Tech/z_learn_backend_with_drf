@@ -1,3 +1,21 @@
+def upload_quiz_questions_from_data(quiz, data):
+    """
+    Shared logic to upload questions from a list of dicts (CSV or JSON) to a quiz.
+    """
+    from concourse.models import Question
+    created = 0
+    for row in data:
+        Question.objects.create(
+            quiz=quiz,
+            text=row["question"],
+            option_1=row["option_1"],
+            option_2=row["option_2"],
+            option_3=row["option_3"],
+            option_4=row["option_4"],
+            correct_option=int(row["correct_option"]),
+        )
+        created += 1
+    return created
 from .serializers import (LatestNewsSerializer, ConcourseDepartmentSerializer,
                           ConcourseSerializer, ConcourseRegistrationSerializer, ConcourseTypeFieldSerializer, ConcoursePastPapersSerializer,ConcourseResourceSerializer,ConcourseSolutionGuideSerializer, QuizSerializer, UserQuizResultSerializer, WithdrawalSerializer, GlobalSettingsSerializer)
 
@@ -481,7 +499,7 @@ class QuizViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         concourse_id = self.kwargs.get('concourse_id')
-        return Quiz.objects.filter(concourse_id=concourse_id)
+        return Quiz.objects.filter(concourse__id=concourse_id)
 
     @action(detail=True, methods=["post"], url_path="upload-questions", parser_classes=[MultiPartParser])
     @extend_schema(
@@ -495,24 +513,14 @@ class QuizViewSet(viewsets.ModelViewSet):
             return Response({"error": "No file provided"}, status=status.HTTP_400_BAD_REQUEST)
 
         if file.name.endswith(".csv"):
-            data = csv.DictReader(io.StringIO(file.read().decode("utf-8")))
+            data = list(csv.DictReader(io.StringIO(file.read().decode("utf-8"))))
         elif file.name.endswith(".json"):
             data = json.load(file)
         else:
             return Response({"error": "Unsupported file format"}, status=status.HTTP_400_BAD_REQUEST)
 
-        for row in data:
-            Question.objects.create(
-                quiz=quiz,
-                text=row["question"],
-                option_1=row["option_1"],
-                option_2=row["option_2"],
-                option_3=row["option_3"],
-                option_4=row["option_4"],
-                correct_option=int(row["correct_option"]),
-            )
-
-        return Response({"message": "Questions uploaded successfully"}, status=status.HTTP_201_CREATED)
+        created = upload_quiz_questions_from_data(quiz, data)
+        return Response({"message": f"Questions uploaded successfully: {created} created"}, status=status.HTTP_201_CREATED)
 
     @action(detail=True, methods=["post"], url_path="submit-results")
     @extend_schema(
