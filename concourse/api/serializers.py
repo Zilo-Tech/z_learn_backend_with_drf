@@ -97,16 +97,27 @@ class ConcourseTypeFieldSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 class ConcoursePastPapersSerializer(serializers.ModelSerializer):
-    concourse = serializers.PrimaryKeyRelatedField(queryset=Concourse.objects.all(), many=True)
+    concourse = serializers.SerializerMethodField()
+
     class Meta:
         model = ConcoursePastPapers
         fields = "__all__"
 
+    def get_concourse(self, obj):
+        # Return the first concourse id for backward compatibility
+        concours = obj.concourse.all()
+        return concours[0].id if concours else None
+
 class ConcourseResourceSerializer(serializers.ModelSerializer):
-    concourse = serializers.PrimaryKeyRelatedField(queryset=Concourse.objects.all(), many=True)
+    concourse = serializers.SerializerMethodField()
+
     class Meta:
         model = ConcourseResource
         fields = '__all__'
+
+    def get_concourse(self, obj):
+        concours = obj.concourse.all()
+        return concours[0].id if concours else None
 
 class ConcourseSolutionGuideSerializer(serializers.ModelSerializer):
     class Meta:
@@ -129,7 +140,7 @@ class QuestionSerializer(serializers.ModelSerializer):
 
 class QuizSerializer(serializers.ModelSerializer):
     questions = QuestionSerializer(many=True, read_only=True)
-    concourse = serializers.PrimaryKeyRelatedField(queryset=Concourse.objects.all(), many=True)
+    concourse = serializers.SerializerMethodField()
 
     class Meta:
         model = Quiz
@@ -142,6 +153,10 @@ class QuizSerializer(serializers.ModelSerializer):
             "created_date",
             "questions",
         ]
+
+    def get_concourse(self, obj):
+        concours = obj.concourse.all()
+        return concours[0].id if concours else None
 # Add a similar serializer for ConcourseQuiz if needed
 
 class UserQuizResultSerializer(serializers.ModelSerializer):

@@ -368,14 +368,12 @@ class ConcoursePastPapersView(generics.ListAPIView):
     def get_queryset(self):
         user = self.request.user
         concourse_id = self.kwargs['concourse_id']
-        
         # Check if the user has paid for the concourse
         registration = ConcourseRegistration.objects.filter(user=user, concourse_id=concourse_id, payment_status=True).first()
         if not registration:
             raise PermissionDenied("You have not paid for this concourse.")
-        
-        # Return past papers for the concourse
-        return ConcoursePastPapers.objects.filter(concourse_id=concourse_id)
+        # Return past papers for the concourse (ManyToMany)
+        return ConcoursePastPapers.objects.filter(concourse__id=concourse_id)
     
 #for single paperrr
 class ConcoursePastPaperDetailView(generics.RetrieveAPIView):
