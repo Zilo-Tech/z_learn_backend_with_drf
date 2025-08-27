@@ -109,13 +109,12 @@ class ConcourseRegistration(models.Model):
 
 
 class ConcoursePastPapers(models.Model):
-    concourse = models.ForeignKey(Concourse, on_delete=models.CASCADE, related_name='past_papers')
+    concourse = models.ManyToManyField(Concourse, related_name='past_papers')
     subject = models.CharField(max_length=255)
     file = models.FileField(upload_to='concourse/past_papers/')
     created_at = models.DateTimeField(auto_now_add=True)
     year = models.IntegerField()
-    
-    
+
     def __str__(self):
         return f"{self.subject} - {self.year}"
 
@@ -142,7 +141,7 @@ class ConcourseResource(models.Model):
 
     title = models.CharField(max_length=100)
     description = models.TextField(blank=True, null=True)
-    concourse = models.ForeignKey(Concourse, on_delete=models.CASCADE, related_name="resources")
+    concourse = models.ManyToManyField(Concourse, related_name="resources")
     resource_file = models.FileField(upload_to="resources/", blank=True, null=True)
     url = models.URLField(blank=True, null=True)
     category = models.CharField(max_length=20, choices=CATEGORY_CHOICES)
@@ -155,7 +154,7 @@ class ConcourseResource(models.Model):
 class ConcourseQuiz(models.Model):
     title = models.CharField(max_length=100)
     description = models.TextField(blank=True, null=True)
-    concourse = models.ForeignKey(Concourse, on_delete=models.CASCADE, related_name="concourse_quizzes")
+    concourse = models.ManyToManyField(Concourse, related_name="concourse_quizzes")
     duration = models.PositiveIntegerField(help_text="Duration in minutes")
     created_date = models.DateTimeField(auto_now_add=True)
 
@@ -166,7 +165,7 @@ class ConcourseQuiz(models.Model):
 class Quiz(models.Model):
     title = models.CharField(max_length=100)
     description = models.TextField(blank=True, null=True)
-    concourse = models.ForeignKey(Concourse, on_delete=models.CASCADE, related_name="quizzes")
+    concourse = models.ManyToManyField(Concourse, related_name="quizzes")
     duration = models.PositiveIntegerField(help_text="Duration in minutes")
     created_date = models.DateTimeField(auto_now_add=True)
 

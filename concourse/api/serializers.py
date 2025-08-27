@@ -97,11 +97,13 @@ class ConcourseTypeFieldSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 class ConcoursePastPapersSerializer(serializers.ModelSerializer):
+    concourse = serializers.PrimaryKeyRelatedField(queryset=Concourse.objects.all(), many=True)
     class Meta:
         model = ConcoursePastPapers
         fields = "__all__"
 
 class ConcourseResourceSerializer(serializers.ModelSerializer):
+    concourse = serializers.PrimaryKeyRelatedField(queryset=Concourse.objects.all(), many=True)
     class Meta:
         model = ConcourseResource
         fields = '__all__'
@@ -127,6 +129,7 @@ class QuestionSerializer(serializers.ModelSerializer):
 
 class QuizSerializer(serializers.ModelSerializer):
     questions = QuestionSerializer(many=True, read_only=True)
+    concourse = serializers.PrimaryKeyRelatedField(queryset=Concourse.objects.all(), many=True)
 
     class Meta:
         model = Quiz
@@ -139,6 +142,7 @@ class QuizSerializer(serializers.ModelSerializer):
             "created_date",
             "questions",
         ]
+# Add a similar serializer for ConcourseQuiz if needed
 
 class UserQuizResultSerializer(serializers.ModelSerializer):
     class Meta:

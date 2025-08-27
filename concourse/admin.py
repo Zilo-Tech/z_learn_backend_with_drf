@@ -13,18 +13,25 @@ admin.site.register(ConcourseDepartment)
 admin.site.register(LatestNews)
 admin.site.register(ConcourseRegistration)
 admin.site.register(ConcourseTypeField)
-admin.site.register(ConcoursePastPapers)
-admin.site.register(ConcourseResource)
+@admin.register(ConcoursePastPapers)
+class ConcoursePastPapersAdmin(admin.ModelAdmin):
+    filter_horizontal = ('concourse',)
+
+@admin.register(ConcourseResource)
+class ConcourseResourceAdmin(admin.ModelAdmin):
+    filter_horizontal = ('concourse',)
 admin.site.register(ConcourseSolutionGuide)
 admin.site.register(UserQuizResult)
 
 class QuestionUploadForm(forms.Form):
     file = forms.FileField()
 
+
 @admin.register(Quiz)
 class QuizAdmin(admin.ModelAdmin):
-    list_display = ("title", "concourse", "duration", "created_date")
+    list_display = ("title", "duration", "created_date")
     search_fields = ("title",)
+    filter_horizontal = ('concourse',)
     list_filter = ("concourse",)
     change_list_template = "admin/quiz_change_list.html"
 
