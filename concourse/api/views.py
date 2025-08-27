@@ -404,7 +404,7 @@ class ConcourseResourceListView(generics.ListAPIView):
         user = self.request.user
         concourse_id = self.kwargs['concourse_id']
         registered_concourses = ConcourseRegistration.objects.filter(user=user).values_list('concourse_id', flat=True)
-        return ConcourseResource.objects.filter(concourse_id=concourse_id, concourse_id__in=registered_concourses)
+        return ConcourseResource.objects.filter(concourse__id=concourse_id, concourse__in=registered_concourses)
     
 
 class ConcourseSolutionGuideViewSet(viewsets.ModelViewSet):
